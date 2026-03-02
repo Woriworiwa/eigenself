@@ -12,13 +12,15 @@ import {
   ElementRef,
 } from '@angular/core';
 
+import { environment } from '../../environments/environment';
+
 type AppState = 'welcome' | 'onboarding' | 'interview' | 'processing' | 'reveal';
 type InterviewMode = 'voice-text' | 'text';
 
 interface IdentityDocument {
-  raw: string;        // full markdown document as returned by the API
-  name: string;       // extracted name, or 'You' if unknown
-  generated: string;  // ISO date string
+  raw: string; // full markdown document as returned by the API
+  name: string; // extracted name, or 'You' if unknown
+  generated: string; // ISO date string
 }
 
 interface Message {
@@ -86,7 +88,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
 
   // Voice recording state
   isRecording = signal<boolean>(false);
-  voiceTranscript = signal<string>('');  // live display while recording
+  voiceTranscript = signal<string>(''); // live display while recording
 
   // Name prompt state
   showNamePrompt = signal<boolean>(false);
@@ -103,10 +105,10 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
 
   readonly onboardingParagraphs: string[] = [
     "Before we start — I want to tell you what this is, and what it isn't.",
-    "I am not going to ask you to list your skills or summarise your experience. I have read enough CVs. I am more interested in how you actually think, what lights you up, and what makes you different from everyone with the same job title.",
-    "We are going to have a real conversation. I will ask you things. You answer however feels natural — there is no script, no right answer, no way to get this wrong.",
-    "At the end, I will build something that captures who you actually are — not just what you have done.",
-    "When you are ready — tell me how you'd like to talk."
+    'I am not going to ask you to list your skills or summarise your experience. I have read enough CVs. I am more interested in how you actually think, what lights you up, and what makes you different from everyone with the same job title.',
+    'We are going to have a real conversation. I will ask you things. You answer however feels natural — there is no script, no right answer, no way to get this wrong.',
+    'At the end, I will build something that captures who you actually are — not just what you have done.',
+    "When you are ready — tell me how you'd like to talk.",
   ];
 
   visibleParagraphs = signal<number>(0);
@@ -150,7 +152,9 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     try {
       const el = this.conversationBody?.nativeElement;
       if (el) el.scrollTop = el.scrollHeight;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   private addTimer(t: ReturnType<typeof setTimeout>): ReturnType<typeof setTimeout> {
@@ -163,7 +167,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       this.mediaRecorder.stop();
     }
     if (this.recordingStream) {
-      this.recordingStream.getTracks().forEach(track => track.stop());
+      this.recordingStream.getTracks().forEach((track) => track.stop());
       this.recordingStream = null;
     }
     this.isRecording.set(false);
@@ -196,7 +200,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     this.currentState.set('interview');
     this.agentTyping.set(true);
 
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     if (this.cvText()) {
       // Agent reads the CV and opens with something specific.
@@ -204,19 +208,26 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       const opening = await this.sendToAgent('[START]');
       // Strip the trigger from messages — it was never a real user message.
       // The agent's response becomes the first thing the user sees.
-      this.messages.update(msgs => [...msgs, {
-        role: 'agent',
-        text: opening.replace('[CONVERSATION_COMPLETE]', '').trim(),
-        timestamp: new Date(),
-      }]);
+      this.messages.update((msgs) => [
+        ...msgs,
+        {
+          role: 'agent',
+          text: opening.replace('[CONVERSATION_COMPLETE]', '').trim(),
+          timestamp: new Date(),
+        },
+      ]);
     } else {
       // No CV — use the default opening question.
-      const opening = "What is something you have worked on recently that you are genuinely proud of? It does not have to be a big thing.";
-      this.messages.update(msgs => [...msgs, {
-        role: 'agent',
-        text: opening,
-        timestamp: new Date(),
-      }]);
+      const opening =
+        'What is something you have worked on recently that you are genuinely proud of? It does not have to be a big thing.';
+      this.messages.update((msgs) => [
+        ...msgs,
+        {
+          role: 'agent',
+          text: opening,
+          timestamp: new Date(),
+        },
+      ]);
     }
 
     this.agentTyping.set(false);
@@ -232,8 +243,10 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     if (!file) return;
 
     // Validate type client-side before sending
-    const allowed = ['application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
     const nameOk = file.name.endsWith('.pdf') || file.name.endsWith('.docx');
     if (!allowed.includes(file.type) && !nameOk) {
       this.cvError.set('Please upload a PDF or Word document.');
@@ -248,12 +261,12 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       const formData = new FormData();
       formData.append('cv', file);
 
-      const response = await fetch('http://localhost:3000/api/parse-cv', {
+      const response = await fetch(`${environment.apiUrl}/api/parse-cv`, {
         method: 'POST',
         body: formData,
       });
 
-      const data = await response.json() as { cvText?: string; error?: string };
+      const data = (await response.json()) as { cvText?: string; error?: string };
 
       if (!response.ok || data.error) {
         this.cvError.set(data.error ?? 'Upload failed. Please try again.');
@@ -320,7 +333,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.ogg');
 
-      const response = await fetch('http://localhost:3000/api/transcribe', {
+      const response = await fetch(`${environment.apiUrl}/api/transcribe`, {
         method: 'POST',
         body: formData,
       });
@@ -331,7 +344,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
         return;
       }
 
-      const data = await response.json() as { transcript?: string };
+      const data = (await response.json()) as { transcript?: string };
       const transcript = data.transcript?.trim() ?? '';
 
       if (!transcript) {
@@ -347,7 +360,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       this.agentTyping.set(false);
       await this.handleUserMessage(transcript);
       this.voiceTranscript.set('');
-
     } catch (error) {
       console.error('Transcribe error:', error);
       this.agentTyping.set(false);
@@ -366,11 +378,14 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   async handleUserMessage(text: string): Promise<void> {
     if (!text.trim() || this.agentTyping()) return;
 
-    this.messages.update(msgs => [...msgs, {
-      role: 'user',
-      text: text.trim(),
-      timestamp: new Date(),
-    }]);
+    this.messages.update((msgs) => [
+      ...msgs,
+      {
+        role: 'user',
+        text: text.trim(),
+        timestamp: new Date(),
+      },
+    ]);
 
     this.currentTextInput.set('');
     this.agentTyping.set(true);
@@ -380,11 +395,14 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     const isComplete = agentResponse.includes('[CONVERSATION_COMPLETE]');
     const cleanResponse = agentResponse.replace('[CONVERSATION_COMPLETE]', '').trim();
 
-    this.messages.update(msgs => [...msgs, {
-      role: 'agent',
-      text: cleanResponse,
-      timestamp: new Date(),
-    }]);
+    this.messages.update((msgs) => [
+      ...msgs,
+      {
+        role: 'agent',
+        text: cleanResponse,
+        timestamp: new Date(),
+      },
+    ]);
 
     this.agentTyping.set(false);
 
@@ -399,10 +417,12 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
           this.showNamePrompt.set(true);
         }, 800);
       } else {
-        setTimeout(() => { void this.transitionToProcessing(); }, 1500);
+        setTimeout(() => {
+          void this.transitionToProcessing();
+        }, 1500);
       }
     } else if (this.interviewMode() === 'voice-text') {
-      await this.startRecording();  // auto-resume after agent responds
+      await this.startRecording(); // auto-resume after agent responds
     }
   }
 
@@ -410,7 +430,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     const history = this.messages();
 
     // Bedrock requires conversations to start with a user message.
-    const firstUserIndex = history.findIndex(m => m.role === 'user');
+    const firstUserIndex = history.findIndex((m) => m.role === 'user');
 
     let messagesToSend: { role: string; text: string }[];
 
@@ -423,16 +443,17 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       // has context of its own opening question.
       messagesToSend = [
         { role: 'user', text: '[START]' },
-        ...history.map(m => ({ role: m.role, text: m.text })),
+        ...history.map((m) => ({ role: m.role, text: m.text })),
       ];
     } else {
       // Normal case: history starts with a user message
-      messagesToSend = history.slice(firstUserIndex)
-        .map(msg => ({ role: msg.role, text: msg.text }));
+      messagesToSend = history
+        .slice(firstUserIndex)
+        .map((msg) => ({ role: msg.role, text: msg.text }));
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/chat', {
+      const response = await fetch(`${environment.apiUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -442,12 +463,12 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       });
 
       if (!response.ok) {
-        const err = await response.json() as { error?: string };
+        const err = (await response.json()) as { error?: string };
         console.error('Chat API error:', err.error ?? 'Server error');
         return "I'm having trouble connecting right now. Could you tell me more about that?";
       }
 
-      const data = await response.json() as { text?: string };
+      const data = (await response.json()) as { text?: string };
       return data.text ?? '';
     } catch (error) {
       console.error('Chat API error:', error);
@@ -457,13 +478,13 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   }
 
   private updateProtocolSignals(): void {
-    const agentCount = this.messages().filter(m => m.role === 'agent').length;
-    this.protocolSignals.update(signals => ({
-      story:      agentCount >= 1 ? true : signals.story,
-      energy:     agentCount >= 2 ? true : signals.energy,
-      voice:      agentCount >= 3 ? true : signals.voice,
+    const agentCount = this.messages().filter((m) => m.role === 'agent').length;
+    this.protocolSignals.update((signals) => ({
+      story: agentCount >= 1 ? true : signals.story,
+      energy: agentCount >= 2 ? true : signals.energy,
+      voice: agentCount >= 3 ? true : signals.voice,
       human_edge: agentCount >= 4 ? true : signals.human_edge,
-      expertise:  agentCount >= 5 ? true : signals.expertise,
+      expertise: agentCount >= 5 ? true : signals.expertise,
     }));
   }
 
@@ -487,9 +508,12 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   // ── Voice output ───────────────────────────────────────────────────────────
 
   private speakText(text: string): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const synth = window.speechSynthesis;
-      if (!synth) { resolve(); return; }
+      if (!synth) {
+        resolve();
+        return;
+      }
 
       synth.cancel();
       const utt = new SpeechSynthesisUtterance(text);
@@ -497,8 +521,14 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       utt.pitch = 1.0;
       utt.volume = 1.0;
       this.isSpeaking.set(true);
-      utt.onend = () => { this.isSpeaking.set(false); resolve(); };
-      utt.onerror = () => { this.isSpeaking.set(false); resolve(); };
+      utt.onend = () => {
+        this.isSpeaking.set(false);
+        resolve();
+      };
+      utt.onerror = () => {
+        this.isSpeaking.set(false);
+        resolve();
+      };
       synth.speak(utt);
     });
   }
@@ -539,12 +569,12 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       if (this.cvText()) {
         this.processingStatus.set('Looking for your name…');
         try {
-          const nameRes = await fetch('http://localhost:3000/api/extract-name', {
+          const nameRes = await fetch(`${environment.apiUrl}/api/extract-name`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cvText: this.cvText() }),
           });
-          const nameData = await nameRes.json() as { name: string | null };
+          const nameData = (await nameRes.json()) as { name: string | null };
           if (nameData.name) {
             resolvedName = nameData.name;
             this.userName.set(resolvedName);
@@ -559,8 +589,8 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       // (the agent may have asked for it — scan the last few user messages)
       if (!resolvedName) {
         const userMessages = this.messages()
-          .filter(m => m.role === 'user')
-          .map(m => m.text);
+          .filter((m) => m.role === 'user')
+          .map((m) => m.text);
         // If the conversation was short and first user message looks like a name,
         // use it. This is a heuristic — the document prompt will handle it properly.
         const firstMsg = userMessages[0] ?? '';
@@ -574,11 +604,11 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       // Step 3 — generate the document
       this.processingStatus.set('Building your identity document…');
 
-      const docRes = await fetch('http://localhost:3000/api/generate-document', {
+      const docRes = await fetch(`${environment.apiUrl}/api/generate-document`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: this.messages().map(m => ({ role: m.role, text: m.text })),
+          messages: this.messages().map((m) => ({ role: m.role, text: m.text })),
           cvText: this.cvText() || undefined,
           userName: resolvedName || undefined,
         }),
@@ -588,7 +618,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
         throw new Error('Document generation failed');
       }
 
-      const docData = await docRes.json() as { document: string };
+      const docData = (await docRes.json()) as { document: string };
 
       this.identityDoc.set({
         raw: docData.document,
@@ -598,7 +628,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
 
       this.processingStatus.set('Done.');
       this.currentState.set('reveal');
-
     } catch (error) {
       console.error('Processing error:', error);
       // Fallback — show reveal with error state
@@ -628,10 +657,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   // ── Clipboard & download ───────────────────────────────────────────────────
 
   async copyDocument(): Promise<void> {
-    await this.copyText(
-      this.getDocumentText(),
-      'Copied. Drop this into any AI agent.'
-    );
+    await this.copyText(this.getDocumentText(), 'Copied. Drop this into any AI agent.');
   }
 
   downloadDocument(): void {
@@ -655,7 +681,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     this.profilePublishError.set('');
 
     try {
-      const response = await fetch('http://localhost:3000/api/publish-profile', {
+      const response = await fetch(`${environment.apiUrl}/api/publish-profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -665,7 +691,7 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
         }),
       });
 
-      const data = await response.json() as {
+      const data = (await response.json()) as {
         profileUrl?: string;
         slug?: string;
         isUpdate?: boolean;
@@ -679,7 +705,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
 
       this.profileUrl.set(data.profileUrl ?? '');
       this.profileSlug.set(data.slug ?? '');
-
     } catch {
       this.profilePublishError.set('Could not reach the server. Is it running?');
     } finally {

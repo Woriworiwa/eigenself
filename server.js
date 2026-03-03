@@ -817,6 +817,7 @@ async function createSonicSession({ socket, systemPrompt, cvText }) {
   // Transcript accumulator — we build the full conversation text for document generation
   let transcriptBuffer = { role: null, text: '' };
   const fullTranscript = []; // array of { role, text } entries
+  let completeSent = false; // guard — emit sonic:complete only once
 
   // Process responses from Bedrock
   (async () => {
@@ -877,10 +878,13 @@ async function createSonicSession({ socket, systemPrompt, cvText }) {
           }
         }
 
-        // Detect [CONVERSATION_COMPLETE] signal from the agent
-        const allText = fullTranscript.map(t => t.text).join(' ');
-        if (allText.includes('[CONVERSATION_COMPLETE]')) {
-          socket.emit('sonic:complete', { transcript: fullTranscript });
+        // Detect [CONVERSATION_COMPLETE] signal from the agent (emit only once)
+        if (!completeSent) {
+          const allText = fullTranscript.map(t => t.text).join(' ');
+          if (allText.includes('[CONVERSATION_COMPLETE]')) {
+            completeSent = true;
+            socket.emit('sonic:complete', { transcript: fullTranscript });
+          }
         }
       }
     } catch (error) {

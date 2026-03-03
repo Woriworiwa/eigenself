@@ -89,6 +89,10 @@ export class InterviewComponent implements OnDestroy {
   readonly isSonicSpeaking = computed(() => this.sonicService.agentSpeaking());
   readonly isSonicListening = computed(() => this.sonicService.listening());
   readonly supportsSonic = signal<boolean>(this._checkSonicSupport());
+  private readonly sonicUserPaused = signal<boolean>(false);
+  readonly sonicPaused = computed(() =>
+    this.interviewMode() === 'sonic' && this.sonicUserPaused(),
+  );
 
   // Sync fullTranscript → messages during sonic mode
   private readonly _sonicTranscriptEffect = effect(() => {
@@ -103,10 +107,11 @@ export class InterviewComponent implements OnDestroy {
     );
   }, { allowSignalWrites: true });
 
-  // Start mic once the sonic session is ready
+  // Start mic once the sonic session is ready (skip if user manually paused)
   private readonly _sonicReadyEffect = effect(() => {
     if (this.interviewMode() !== 'sonic') return;
     if (!this.sonicService.sessionReady() || this.sonicService.listening()) return;
+    if (this.sonicUserPaused()) return;
     void this.sonicService.startListening();
   });
 
@@ -186,11 +191,36 @@ export class InterviewComponent implements OnDestroy {
 
   private async _startSonicSession(): Promise<void> {
     try {
+      this.sonicUserPaused.set(false);
       await this.sonicService.connect();
       this.sonicService.startSession('', this.cvText() || undefined);
       // _sonicReadyEffect handles startListening() once sessionReady is true
     } catch (err) {
       console.error('[Sonic] Start error:', err);
+    }
+  }
+
+  onMicClicked(): void {
+    if (this.interviewMode() === 'sonic') {
+      this.toggleSonicMic();
+    } else {
+      this.isRecording() ? this.submitVoiceRecording() : void this.startRecording();
+    }
+  }
+
+  onPauseClicked(): void {
+    if (this.interviewMode() === 'sonic') {
+      this.toggleSonicMic();
+    }
+  }
+
+  private toggleSonicMic(): void {
+    if (this.sonicService.listening()) {
+      this.sonicUserPaused.set(true);
+      void this.sonicService.stopListening();
+    } else {
+      this.sonicUserPaused.set(false);
+      void this.sonicService.startListening();
     }
   }
 
@@ -595,6 +625,9 @@ export class InterviewComponent implements OnDestroy {
 
   async transitionToProcessing(): Promise<void> {
     this.stopRecording();
+    if (this.interviewMode() === 'sonic') {
+      this.sonicService.stopSession();
+    }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     this.currentState.set('processing');
 

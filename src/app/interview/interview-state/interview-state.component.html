@@ -114,35 +114,42 @@
     <footer class="iv-footer">
       <div class="iv-controls">
 
-        <!-- Mute / unmute (voice-text mode) -->
+        <!-- Mute / unmute -->
         @if (interviewMode() === 'voice-text' || interviewMode() === 'sonic') {
           <button
             class="iv-ctrl"
-            [class.iv-ctrl--active]="isRecording()"
+            [class.iv-ctrl--active]="interviewMode() === 'sonic' ? isSonicListening() : isRecording()"
             type="button"
             (click)="micClicked.emit()"
-            [attr.aria-label]="isRecording() ? 'Stop recording' : 'Start recording'"
+            [attr.aria-label]="interviewMode() === 'sonic'
+              ? (isSonicListening() ? 'Mute microphone' : 'Unmute microphone')
+              : (isRecording() ? 'Stop recording' : 'Start recording')"
           >
             <div class="iv-ctrl__icon">
               <span class="material-symbols-outlined">
-                {{ isRecording() ? 'mic' : 'mic_off' }}
+                {{ (interviewMode() === 'sonic' ? isSonicListening() : isRecording()) ? 'mic' : 'mic_off' }}
               </span>
             </div>
-            <span class="iv-ctrl__label">{{ isRecording() ? 'Send' : 'Mute' }}</span>
+            <span class="iv-ctrl__label">
+              {{ interviewMode() === 'sonic'
+                ? (isSonicListening() ? 'Mute' : 'Unmute')
+                : (isRecording() ? 'Send' : 'Mute') }}
+            </span>
           </button>
         }
 
         <!-- Pause / resume -->
         <button
           class="iv-ctrl"
-          [class.iv-ctrl--active]="false"
+          [class.iv-ctrl--active]="isPaused()"
           type="button"
-          aria-label="Pause interview"
+          (click)="pauseClicked.emit()"
+          [attr.aria-label]="isPaused() ? 'Resume interview' : 'Pause interview'"
         >
           <div class="iv-ctrl__icon">
-            <span class="material-symbols-outlined">pause</span>
+            <span class="material-symbols-outlined">{{ isPaused() ? 'play_arrow' : 'pause' }}</span>
           </div>
-          <span class="iv-ctrl__label">Pause</span>
+          <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
         </button>
 
         <!-- Text input toggle -->

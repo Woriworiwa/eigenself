@@ -26,8 +26,11 @@ export class InterviewStateComponent implements AfterViewChecked {
   conversationComplete = input<boolean>(false);
   currentTextInput = input<string>('');
 
+  isPaused = input<boolean>(false);
+
   endInterview = output<void>();
   micClicked = output<void>();
+  pauseClicked = output<void>();
   textChanged = output<string>();
   textKeydown = output<KeyboardEvent>();
   textSubmit = output<void>();

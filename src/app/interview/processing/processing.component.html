@@ -1,16 +1,15 @@
-<main class="state" role="main" aria-label="Building your identity document">
+<div class="processing-shell" role="main" aria-label="Building your identity document">
 
   @if (showNamePrompt()) {
     <!-- Name prompt — shown when name could not be extracted from CV -->
-    <div class="name-prompt-container">
-      <p class="name-prompt-message">
-        One last thing — what is your name?
-      </p>
-      <div class="name-prompt-input-row">
+    <div class="name-prompt-card">
+      <p class="name-prompt-label">One last thing —</p>
+      <h2 class="name-prompt-heading">What is your name?</h2>
+      <div class="name-input-row">
         <label for="name-input" class="visually-hidden">Your full name</label>
         <input
           id="name-input"
-          class="text-input"
+          class="name-input"
           type="text"
           [value]="nameInput()"
           (input)="onNameInput($event)"
@@ -20,19 +19,19 @@
           autofocus
         >
         <button
-          class="send-button"
+          class="name-submit-btn"
           type="button"
           (click)="confirmName()"
           aria-label="Continue"
-        >→</button>
+        >
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
       </div>
     </div>
+
   } @else {
-    <!-- Processing spinner -->
-    <div class="processing-container">
-      <p class="processing-message" aria-live="polite">
-        "{{ processingStatus() }}"
-      </p>
+    <!-- Processing view -->
+    <div class="processing-inner">
       <div class="dots-field" aria-hidden="true" role="presentation">
         <div class="processing-dot"></div>
         <div class="processing-dot"></div>
@@ -40,7 +39,8 @@
         <div class="processing-dot"></div>
         <div class="processing-dot"></div>
       </div>
+      <p class="processing-message" aria-live="polite">{{ processingStatus() }}</p>
     </div>
   }
 
-</main>
+</div>

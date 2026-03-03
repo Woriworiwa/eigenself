@@ -1,92 +1,155 @@
 // ─── Host ─────────────────────────────────────────────────────────────────────
 
 :host {
-  display: contents;
+  display: block;
+  min-height: 100vh;
+  background: #221c10;
 }
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+
+$gold:        #eead2b;
+$bg:          #221c10;
+$bg-section:  rgba(255, 255, 255, 0.03);
+$bg-card:     rgba(255, 255, 255, 0.025);
+$gold-border: rgba(238, 173, 43, 0.18);
+$gold-dim:    rgba(238, 173, 43, 0.10);
+$text:        #f1ece0;
+$muted:       #8a8070;
+$radius-sm:   6px;
+$radius-md:   10px;
+$radius-lg:   16px;
+$radius-xl:   20px;
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes stateIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
 }
 
-@keyframes recordPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.85); }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-// ─── State wrapper ────────────────────────────────────────────────────────────
+// ─── Shell ────────────────────────────────────────────────────────────────────
 
-.state {
-  flex: 1;
+.reveal-shell {
+  min-height: 100vh;
+  background: $bg;
+  font-family: 'Inter', 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
   display: flex;
-  flex-direction: column;
-  animation: stateIn 0.3s ease both;
-}
-
-.reveal-state {
-  display: flex;
-  align-items: flex-start;
   justify-content: center;
-  padding: 2rem 1rem 4rem;
+  padding: 3rem 1.5rem 5rem;
   overflow-y: auto;
 }
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
-
 .reveal-container {
   width: 100%;
-  max-width: 720px;
+  max-width: 680px;
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
+  animation: fadeUp 0.4s ease both;
 }
 
+// ─── Header ───────────────────────────────────────────────────────────────────
+
 .reveal-header {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+
+.reveal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $gold;
+  margin-bottom: 0.25rem;
+}
+
+.reveal-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $gold;
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .reveal-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.5rem;
-  color: var(--ink);
-  margin: 0 0 0.4rem;
-  line-height: 1.3;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 800;
+  color: $text;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
 }
 
 .reveal-subtitle {
   font-size: 0.9rem;
-  color: var(--muted);
+  color: $muted;
   margin: 0;
+  line-height: 1.5;
 }
 
 // ─── Document panel ───────────────────────────────────────────────────────────
 
 .reveal-document-panel {
-  background: var(--cream);
-  border: 1px solid rgba(0,0,0,0.1);
-  border-left: 4px solid var(--accent);
-  border-radius: 6px;
+  background: $bg-card;
+  border: 1px solid $gold-border;
+  border-radius: $radius-lg;
   overflow: hidden;
-  max-height: 60vh;
-  overflow-y: auto;
+  max-height: 55vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.document-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  background: rgba(238, 173, 43, 0.06);
+  border-bottom: 1px solid $gold-border;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: $muted;
+
+  .material-symbols-outlined {
+    font-size: 0.95rem;
+    color: $gold;
+  }
 }
 
 .document-content {
-  padding: 1.75rem 2rem;
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  flex: 1;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(238, 173, 43, 0.2); border-radius: 10px; }
 }
 
 .document-pre {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.75;
+  color: rgba($text, 0.8);
   white-space: pre-wrap;
   word-break: break-word;
   margin: 0;
@@ -97,10 +160,17 @@
 .reveal-actions {
   display: flex;
   gap: 0.75rem;
+}
 
-  .btn {
-    flex: 1;
-  }
+.copy-confirmation {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: $gold;
+  min-height: 1.2em;
+
+  .material-symbols-outlined { font-size: 0.95rem; }
 }
 
 // ─── Buttons ─────────────────────────────────────────────────────────────────
@@ -109,84 +179,66 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.875rem 1.5rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  gap: 0.45rem;
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border-radius: $radius-md;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
   border: none;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  text-decoration: none;
+
+  .material-symbols-outlined { font-size: 1.1rem; }
+
+  &:active { transform: scale(0.97); }
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid $gold;
     outline-offset: 3px;
   }
 
-  &:hover { opacity: 0.88; }
-  &:active { transform: scale(0.98); }
+  &[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 }
 
-.btn--primary {
-  background: var(--accent);
-  color: #fff;
+.btn--gold {
+  background: $gold;
+  color: $bg;
+
+  &:hover { filter: brightness(1.1); }
 }
 
-.btn--secondary {
-  background: transparent;
-  color: var(--muted);
-  border: 1.5px solid var(--border);
+.btn--ghost {
+  background: $bg-section;
+  color: $text;
+  border: 1px solid $gold-border;
 
-  &:hover { border-color: var(--muted); }
+  &:hover { background: $gold-dim; }
 }
 
-.btn--outline {
-  background: transparent;
-  color: var(--ink);
-  border: 1.5px solid var(--border);
-
-  &:hover { border-color: rgba(15, 14, 12, 0.3); }
-}
-
-.btn--reveal-copy {
-  font-size: 1rem;
-  padding: 0.9rem 1.5rem;
+.btn--sm {
+  flex: none;
+  padding: 0.55rem 1rem;
+  font-size: 0.82rem;
 }
 
 .btn--publish {
-  background: var(--ink);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.85rem 1.75rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
+  flex: none;
   align-self: flex-start;
-  transition: opacity 0.15s;
-
-  &:hover:not(:disabled) { opacity: 0.8; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  padding: 0.875rem 1.75rem;
 }
 
-.btn--url-copy,
-.btn--url-open {
-  font-size: 0.85rem;
-  padding: 0.55rem 1rem;
+.btn-icon--spin {
+  animation: spin 1s linear infinite;
 }
 
-// ─── Copy confirmation ────────────────────────────────────────────────────────
-
-.copy-confirmation {
-  font-size: 0.82rem;
-  color: var(--muted);
-  text-align: center;
-  min-height: 1.2em;
-  animation: fadeIn 0.2s ease both;
-}
-
-// ─── Profile publishing section ───────────────────────────────────────────────
+// ─── Profile publishing ───────────────────────────────────────────────────────
 
 .profile-publish-section {
   display: flex;
@@ -196,8 +248,7 @@
 
 .profile-publish-divider {
   height: 1px;
-  background: rgba(0, 0, 0, 0.1);
-  margin: 0.5rem 0;
+  background: $gold-border;
 }
 
 .profile-publish-header {
@@ -207,30 +258,29 @@
 }
 
 .profile-publish-title {
-  font-family: 'Playfair Display', serif;
   font-size: 1.1rem;
-  color: var(--ink);
+  font-weight: 700;
+  color: $text;
   margin: 0;
-  font-weight: 600;
 }
 
 .profile-publish-desc {
   font-size: 0.85rem;
-  color: var(--muted);
+  color: $muted;
   line-height: 1.6;
   margin: 0;
 }
 
 .profile-publish-status {
   font-size: 0.82rem;
-  color: var(--muted);
+  color: $muted;
   font-style: italic;
   margin: 0;
 }
 
 .profile-publish-error {
   font-size: 0.82rem;
-  color: #c0392b;
+  color: #e57373;
   margin: 0;
 }
 
@@ -239,40 +289,47 @@
 .profile-url-card {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.9rem;
   padding: 1.25rem 1.5rem;
-  background: var(--cream);
-  border: 1.5px solid var(--accent);
-  border-radius: 8px;
+  background: rgba($gold, 0.05);
+  border: 1.5px solid rgba($gold, 0.25);
+  border-radius: $radius-lg;
 }
 
 .profile-url-live-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #2d8a4e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: #4ade80;
 }
 
 .live-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #2d8a4e;
-  animation: recordPulse 2s ease-in-out infinite;
+  background: #4ade80;
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .profile-url-link {
   font-size: 0.82rem;
-  color: var(--accent);
+  color: $gold;
   word-break: break-all;
   text-decoration: none;
   font-family: 'Courier New', Courier, monospace;
 
   &:hover { text-decoration: underline; }
+
+  &:focus-visible {
+    outline: 2px solid $gold;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
 
 .profile-url-actions {
@@ -283,14 +340,16 @@
 .profile-republish-btn {
   background: none;
   border: none;
-  color: var(--muted);
+  color: $muted;
   font-size: 0.78rem;
+  font-family: inherit;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 2px;
   align-self: flex-start;
+  transition: color 0.15s;
 
-  &:hover { color: var(--ink); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover { color: $text; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }

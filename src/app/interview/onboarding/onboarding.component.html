@@ -1,32 +1,31 @@
-<main class="state onboarding-state" role="main" aria-label="Welcome">
+<div class="onboarding-shell" role="main" aria-label="Welcome">
   <div class="onboarding-container">
 
+    <!-- Intro paragraphs — fade in one by one -->
     <div class="onboarding-message" aria-live="polite">
       @for (para of onboardingParagraphs.slice(0, visibleParagraphs()); track $index) {
-        <p class="onboarding-para">{{ para }}</p>
+        <p class="onboarding-para" [class.onboarding-para--lead]="$index === 0" [class.onboarding-para--cta]="$index === onboardingParagraphs.length - 1">{{ para }}</p>
       }
     </div>
 
     @if (onboardingComplete()) {
 
       <!-- CV Upload Zone (optional) -->
-      <div class="cv-upload-zone">
+      <div class="cv-upload-zone" aria-label="CV upload (optional)">
 
         @if (!cvFileName()) {
           <label class="cv-upload-label" for="cv-file-input">
-            <span class="cv-upload-icon" aria-hidden="true">📄</span>
+            <span class="material-symbols-outlined cv-upload-icon" aria-hidden="true">description</span>
             <span class="cv-upload-text">
               @if (cvUploading()) {
                 Reading your CV…
               } @else {
-                Do you have a CV?
+                Got a CV?
               }
             </span>
             <span class="cv-upload-subtext">
               @if (!cvUploading()) {
-                If you share it, I will read it before we start — so I won't ask
-                you things you have already written down. I will only ask about
-                what your CV can't tell me.
+                I'll read it before we start — so I won't ask about things you've already written down.
               }
             </span>
             <span class="cv-upload-formats">PDF or Word · optional</span>
@@ -47,7 +46,7 @@
         } @else {
           <!-- CV loaded state -->
           <div class="cv-loaded">
-            <span class="cv-loaded-icon" aria-hidden="true">✓</span>
+            <span class="material-symbols-outlined cv-loaded-icon" aria-hidden="true">check_circle</span>
             <span class="cv-loaded-name">{{ cvFileName() }}</span>
             <button
               class="cv-remove-btn"
@@ -55,40 +54,40 @@
               (click)="cvRemoved.emit()"
               aria-label="Remove CV"
             >
-              ✕
+              <span class="material-symbols-outlined">close</span>
             </button>
           </div>
-          <p class="cv-loaded-note">
-            I will read this before we start.
-          </p>
+          <p class="cv-loaded-note">I'll read this before we start.</p>
         }
 
       </div>
 
-      <!-- Mode buttons -->
+      <!-- Mode selection -->
       <div class="onboarding-actions">
         @if (supportsSonic()) {
           <button
-            class="btn btn--primary"
+            class="btn btn--voice"
             type="button"
             (click)="modeSelected.emit('sonic')"
             aria-label="Use voice with Nova 2 Sonic"
           >
-            🎙️&nbsp; Voice
+            <span class="material-symbols-outlined">mic</span>
+            Voice
             <span class="mode-badge">Sonic</span>
           </button>
         }
         <button
-          class="btn btn--secondary"
+          class="btn btn--text"
           type="button"
           (click)="modeSelected.emit('text')"
           aria-label="Type your answers"
         >
-          ⌨️&nbsp; Type
+          <span class="material-symbols-outlined">keyboard</span>
+          Type
         </button>
       </div>
 
     }
 
   </div>
-</main>
+</div>

@@ -2,11 +2,10 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedrock-runtime');
-const {
-  TranscribeStreamingClient,
-  StartStreamTranscriptionCommand,
-} = require('@aws-sdk/client-transcribe-streaming');
+const { BedrockRuntimeClient, ConverseCommand, InvokeModelCommand, InvokeModelWithBidirectionalStreamCommand } = require('@aws-sdk/client-bedrock-runtime');
+const { createServer } = require('http');
+const { Server: SocketIOServer } = require('socket.io');
+
 const multer = require('multer');
 const { Readable } = require('stream');
 const pdfParse = require('pdf-parse');
@@ -26,7 +25,7 @@ const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: 'us-east
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-const transcribe = new TranscribeStreamingClient({ region: 'us-east-1' });
+
 
 const app = express();
 const PORT = 3000;
@@ -499,48 +498,71 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 
   const audioBuffer = req.file.buffer;
+  const mimeType = req.file.mimetype || 'audio/webm';
 
-  // Convert buffer to async iterable of audio chunks for Transcribe streaming
-  async function* audioStream() {
-    const chunkSize = 8192;
-    for (let i = 0; i < audioBuffer.length; i += chunkSize) {
-      yield { AudioEvent: { AudioChunk: audioBuffer.slice(i, i + chunkSize) } };
-    }
-  }
+  const formatMap = {
+    'audio/webm': 'webm',
+    'audio/ogg':  'ogg',
+    'audio/mp4':  'mp4',
+    'audio/mpeg': 'mp3',
+    'audio/wav':  'wav',
+    'audio/flac': 'flac',
+    'audio/aac':  'aac',
+  };
+
+  const baseMime = mimeType.split(';')[0].trim();
+  const audioFormat = formatMap[baseMime] ?? 'webm';
+
+  console.log(`Transcribe request: ${audioBuffer.length} bytes, mime=${mimeType}, format=${audioFormat}`);
 
   try {
-    const command = new StartStreamTranscriptionCommand({
-      LanguageCode: 'en-US',
-      MediaEncoding: 'ogg-opus',  // MediaRecorder default in Chrome/Firefox
-      MediaSampleRateHertz: 48000,
-      AudioStream: audioStream(),
+    const payload = {
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              audio: {
+                format: audioFormat,
+                source: {
+                  bytes: audioBuffer.toString('base64'),
+                },
+              },
+            },
+            {
+              text: 'Please transcribe this audio recording. Output only the spoken words, nothing else. If silent, output [SILENT].',
+            },
+          ],
+        },
+      ],
+      system: [{ text: 'You are a transcription service. Output only the transcript — no explanations, no punctuation corrections, no preamble.' }],
+      inferenceConfig: { max_new_tokens: 500, temperature: 0 },
+    };
+
+    const command = new InvokeModelCommand({
+      modelId: MODEL_ID,
+      contentType: 'application/json',
+      accept: 'application/json',
+      body: JSON.stringify(payload),
     });
 
-    const response = await transcribe.send(command);
+    const response = await bedrock.send(command);
+    const responseBody = JSON.parse(Buffer.from(response.body).toString('utf-8'));
+    const transcript = responseBody?.output?.message?.content?.[0]?.text?.trim() ?? '';
 
-    let transcript = '';
-
-    for await (const event of response.TranscriptResultStream) {
-      if (event.TranscriptEvent) {
-        const results = event.TranscriptEvent.Transcript?.Results ?? [];
-        for (const result of results) {
-          if (!result.IsPartial && result.Alternatives?.[0]?.Transcript) {
-            transcript += result.Alternatives[0].Transcript + ' ';
-          }
-        }
-      }
+    if (!transcript || transcript === '[SILENT]') {
+      console.log('Transcribe result: silent or empty');
+      return res.json({ transcript: '' });
     }
 
-    transcript = transcript.trim();
-    console.log('Transcribe result:', transcript || '(empty)');
+    console.log('Transcribe result:', transcript);
     res.json({ transcript });
 
   } catch (error) {
     console.error('Transcribe error name:', error.name);
     console.error('Transcribe error message:', error.message);
-    console.error('Transcribe error code:', error.code);
-    console.error('Transcribe error httpStatus:', error.$metadata?.httpStatusCode);
-    res.status(500).json({ error: error.message || error.name || 'Unknown transcribe error' });
+    console.error('Transcribe HTTP status:', error.$metadata?.httpStatusCode);
+    res.status(500).json({ error: error.message || 'Transcription failed' });
   }
 });
 
@@ -552,9 +574,423 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Server error' });
 });
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: [
+      'http://localhost:4200',
+      'https://d1k8d68asrg0f1.cloudfront.net',
+    ],
+    methods: ['GET', 'POST'],
+  },
+  maxHttpBufferSize: 1e7, // 10MB — needed for audio chunks
+});
+
+// ── Socket.IO: Nova 2 Sonic voice sessions ──────────────────────────────────
+
+const SONIC_MODEL_ID = 'amazon.nova-2-sonic-v1:0';
+
+// Active sessions keyed by socket.id
+const sonicSessions = new Map();
+
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.id}`);
+
+  // ── sonic:start ─────────────────────────────────────────────────────────
+  // Payload: { systemPrompt: string, cvText?: string }
+  // Opens a Bedrock bidirectional stream and begins the Sonic session.
+
+  socket.on('sonic:start', async (data) => {
+    const { systemPrompt, cvText } = data ?? {};
+
+    if (sonicSessions.has(socket.id)) {
+      console.log(`Session already exists for ${socket.id} — closing old one first`);
+      await closeSonicSession(socket.id);
+    }
+
+    console.log(`Starting Sonic session for ${socket.id}`);
+
+    try {
+      const session = await createSonicSession({
+        socket,
+        systemPrompt: systemPrompt ?? '',
+        cvText: cvText ?? '',
+      });
+
+      sonicSessions.set(socket.id, session);
+      socket.emit('sonic:ready');
+      console.log(`Sonic session ready for ${socket.id}`);
+    } catch (error) {
+      console.error(`Sonic session start error for ${socket.id}:`, error.message);
+      socket.emit('sonic:error', { message: error.message });
+    }
+  });
+
+  // ── sonic:audio ─────────────────────────────────────────────────────────
+  // Payload: Buffer of 16kHz mono PCM16 audio (raw, no container)
+  // Forwarded directly to the Bedrock stream.
+
+  socket.on('sonic:audio', (audioChunk) => {
+    const session = sonicSessions.get(socket.id);
+    if (!session) return;
+
+    try {
+      session.sendAudio(Buffer.isBuffer(audioChunk) ? audioChunk : Buffer.from(audioChunk));
+    } catch (error) {
+      console.error(`Audio send error for ${socket.id}:`, error.message);
+    }
+  });
+
+  // ── sonic:text ──────────────────────────────────────────────────────────
+  // Payload: { text: string }
+  // Sends a typed user message into the Sonic session as a text content block.
+  // Used for the hybrid text+voice mode and Firefox fallback.
+
+  socket.on('sonic:text', async (data) => {
+    const session = sonicSessions.get(socket.id);
+    if (!session) return;
+
+    const text = data?.text ?? '';
+    if (!text.trim()) return;
+
+    console.log(`Text input for ${socket.id}: "${text.slice(0, 60)}"`);
+
+    try {
+      await session.sendText(text);
+    } catch (error) {
+      console.error(`Text send error for ${socket.id}:`, error.message);
+    }
+  });
+
+  // ── sonic:stop ──────────────────────────────────────────────────────────
+  // Closes the Bedrock stream cleanly.
+
+  socket.on('sonic:stop', async () => {
+    console.log(`Stopping Sonic session for ${socket.id}`);
+    await closeSonicSession(socket.id);
+    socket.emit('sonic:stopped');
+  });
+
+  // ── disconnect ───────────────────────────────────────────────────────────
+
+  socket.on('disconnect', async () => {
+    console.log(`Socket disconnected: ${socket.id}`);
+    await closeSonicSession(socket.id);
+  });
+});
+
+// ── SonicSession factory ─────────────────────────────────────────────────────
+
+async function createSonicSession({ socket, systemPrompt, cvText }) {
+  const textEncoder = new TextEncoder();
+
+  // Queue of events to send to Bedrock
+  const eventQueue = [];
+  let resolveNext = null;
+  let sessionClosed = false;
+
+  function enqueue(event) {
+    if (sessionClosed) return;
+    const bytes = textEncoder.encode(JSON.stringify(event));
+    if (resolveNext) {
+      const resolve = resolveNext;
+      resolveNext = null;
+      resolve({ chunk: { bytes } });
+    } else {
+      eventQueue.push({ chunk: { bytes } });
+    }
+  }
+
+  // AsyncIterable that the Bedrock SDK reads from
+  async function* eventStream() {
+    while (!sessionClosed) {
+      if (eventQueue.length > 0) {
+        yield eventQueue.shift();
+      } else {
+        yield await new Promise((resolve) => {
+          resolveNext = resolve;
+        });
+      }
+    }
+  }
+
+  // Build the system prompt — use the server-side SYSTEM_PROMPT when none is provided by the client
+  const effectiveSystemPrompt = systemPrompt || SYSTEM_PROMPT;
+  const fullSystemPrompt = cvText
+    ? `${effectiveSystemPrompt}\n\n---\n\nCV PROVIDED (read before the conversation starts):\n\n${cvText}\n\n---\n\nYou have read this CV. Do not ask about career history, job titles, or skills listed here. Open with something specific from the CV, then focus on what the CV cannot tell you: how they think, how they communicate, what they would never say.\n\nIMPORTANT FOR VOICE: You are speaking out loud. Keep responses to 1-3 short sentences. No lists, no bullet points, no markdown. Sound like a thoughtful person having a real conversation.`
+    : `${effectiveSystemPrompt}\n\nIMPORTANT FOR VOICE: You are speaking out loud. Keep responses to 1-3 short sentences. No lists, no bullet points, no markdown. Sound like a thoughtful person having a real conversation.`;
+
+  // Send session initialization events
+  enqueue({
+    event: {
+      sessionStart: {
+        inferenceConfiguration: {
+          maxTokens: 1024,
+          topP: 0.9,
+          temperature: 0.7,
+        },
+      },
+    },
+  });
+
+  enqueue({
+    event: {
+      promptStart: {
+        promptName: socket.id,
+        textOutputConfiguration: { mediaType: 'text/plain' },
+        audioOutputConfiguration: {
+          mediaType: 'audio/lpcm',
+          sampleRateHertz: 24000,
+          sampleSizeBits: 16,
+          channelCount: 1,
+          voiceId: 'tiffany', // warm, clear voice
+          encoding: 'base64',
+        },
+      },
+    },
+  });
+
+  // Send system prompt as text content block
+  enqueue({
+    event: {
+      contentStart: {
+        promptName: socket.id,
+        contentName: `${socket.id}-system`,
+        type: 'TEXT',
+        interactive: false,
+        role: 'SYSTEM',
+        textInputConfiguration: { mediaType: 'text/plain' },
+      },
+    },
+  });
+
+  enqueue({
+    event: {
+      textInput: {
+        promptName: socket.id,
+        contentName: `${socket.id}-system`,
+        content: fullSystemPrompt,
+      },
+    },
+  });
+
+  enqueue({
+    event: {
+      contentEnd: {
+        promptName: socket.id,
+        contentName: `${socket.id}-system`,
+      },
+    },
+  });
+
+  // Open the audio input content block — stays open until we close it
+  const audioContentName = `${socket.id}-audio-${Date.now()}`;
+
+  enqueue({
+    event: {
+      contentStart: {
+        promptName: socket.id,
+        contentName: audioContentName,
+        type: 'AUDIO',
+        interactive: true,
+        role: 'USER',
+        audioInputConfiguration: {
+          mediaType: 'audio/lpcm',
+          sampleRateHertz: 16000,
+          sampleSizeBits: 16,
+          channelCount: 1,
+          encoding: 'base64',
+        },
+      },
+    },
+  });
+
+  // Start the Bedrock bidirectional stream
+  const command = new InvokeModelWithBidirectionalStreamCommand({
+    modelId: SONIC_MODEL_ID,
+    body: eventStream(),
+  });
+
+  const response = await bedrock.send(command);
+
+  // Transcript accumulator — we build the full conversation text for document generation
+  let transcriptBuffer = { role: null, text: '' };
+  const fullTranscript = []; // array of { role, text } entries
+
+  // Process responses from Bedrock
+  (async () => {
+    try {
+      for await (const event of response.body) {
+        if (sessionClosed) break;
+
+        if (!event.chunk?.bytes) continue;
+
+        let data;
+        try {
+          data = JSON.parse(Buffer.from(event.chunk.bytes).toString('utf-8'));
+        } catch {
+          continue;
+        }
+
+        if (!data.event) continue;
+
+        const ev = data.event;
+
+        // Audio output — stream directly to browser
+        if (ev.audioOutput?.content) {
+          socket.emit('sonic:audio-out', ev.audioOutput.content); // base64 PCM
+        }
+
+        // Text output — accumulate and forward
+        if (ev.textOutput?.content) {
+          const text = ev.textOutput.content;
+          const role = ev.textOutput.role === 'ASSISTANT' ? 'agent' : 'user';
+
+          if (transcriptBuffer.role !== role) {
+            if (transcriptBuffer.text.trim()) {
+              fullTranscript.push({ role: transcriptBuffer.role, text: transcriptBuffer.text.trim() });
+              socket.emit('sonic:transcript-chunk', {
+                role: transcriptBuffer.role,
+                text: transcriptBuffer.text.trim(),
+                final: true,
+              });
+            }
+            transcriptBuffer = { role, text };
+          } else {
+            transcriptBuffer.text += text;
+          }
+
+          socket.emit('sonic:transcript-chunk', { role, text, final: false });
+        }
+
+        // Content end — flush the buffer
+        if (ev.contentEnd) {
+          if (transcriptBuffer.text.trim()) {
+            fullTranscript.push({ role: transcriptBuffer.role, text: transcriptBuffer.text.trim() });
+            socket.emit('sonic:transcript-chunk', {
+              role: transcriptBuffer.role,
+              text: transcriptBuffer.text.trim(),
+              final: true,
+            });
+            transcriptBuffer = { role: null, text: '' };
+          }
+        }
+
+        // Detect [CONVERSATION_COMPLETE] signal from the agent
+        const allText = fullTranscript.map(t => t.text).join(' ');
+        if (allText.includes('[CONVERSATION_COMPLETE]')) {
+          socket.emit('sonic:complete', { transcript: fullTranscript });
+        }
+      }
+    } catch (error) {
+      if (!sessionClosed) {
+        console.error(`Sonic response stream error for ${socket.id}:`, error.message);
+        socket.emit('sonic:error', { message: error.message });
+      }
+    }
+  })();
+
+  // Public API for the session
+  return {
+    audioContentName,
+
+    sendAudio(pcmBuffer) {
+      enqueue({
+        event: {
+          audioInput: {
+            promptName: socket.id,
+            contentName: audioContentName,
+            content: pcmBuffer.toString('base64'),
+          },
+        },
+      });
+    },
+
+    async sendText(text) {
+      const textContentName = `${socket.id}-text-${Date.now()}`;
+
+      enqueue({
+        event: {
+          contentStart: {
+            promptName: socket.id,
+            contentName: textContentName,
+            type: 'TEXT',
+            interactive: true,
+            role: 'USER',
+            textInputConfiguration: { mediaType: 'text/plain' },
+          },
+        },
+      });
+
+      enqueue({
+        event: {
+          textInput: {
+            promptName: socket.id,
+            contentName: textContentName,
+            content: text,
+          },
+        },
+      });
+
+      enqueue({
+        event: {
+          contentEnd: {
+            promptName: socket.id,
+            contentName: textContentName,
+          },
+        },
+      });
+    },
+
+    close() {
+      sessionClosed = true;
+      // Close audio input
+      enqueue({
+        event: {
+          contentEnd: {
+            promptName: socket.id,
+            contentName: audioContentName,
+          },
+        },
+      });
+      // Close prompt
+      enqueue({
+        event: {
+          promptEnd: { promptName: socket.id },
+        },
+      });
+      // Close session
+      enqueue({
+        event: { sessionEnd: {} },
+      });
+      // Unblock the async generator so it can drain and exit
+      if (resolveNext) {
+        resolveNext(null);
+        resolveNext = null;
+      }
+    },
+  };
+}
+
+async function closeSonicSession(socketId) {
+  const session = sonicSessions.get(socketId);
+  if (!session) return;
+  try {
+    session.close();
+  } catch (error) {
+    console.error(`Error closing session for ${socketId}:`, error.message);
+  }
+  sonicSessions.delete(socketId);
+}
+
+// ── Start server ─────────────────────────────────────────────────────────────
+
+httpServer.listen(PORT, () => {
   console.log(`Eigenself server running on http://localhost:${PORT}`);
   console.log('Bedrock region: us-east-1');
-  console.log('Model: ' + MODEL_ID);
+  console.log(`Nova 2 Lite: ${MODEL_ID}`);
+  console.log(`Nova 2 Sonic: ${SONIC_MODEL_ID}`);
   console.log('Endpoints: /api/chat, /api/parse-cv, /api/extract-name, /api/generate-document, /api/publish-profile, /api/transcribe');
+  console.log('Socket.IO: sonic:start, sonic:audio, sonic:text, sonic:stop');
 });

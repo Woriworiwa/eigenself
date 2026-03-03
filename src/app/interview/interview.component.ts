@@ -2,6 +2,7 @@ import {
   Component,
   signal,
   computed,
+  effect,
   OnDestroy,
   OnInit,
   AfterViewChecked,
@@ -13,9 +14,10 @@ import {
 } from '@angular/core';
 
 import { environment } from '../../environments/environment';
+import { SonicService, SonicTranscriptEntry } from '../services/sonic.service';
 
-type AppState = 'welcome' | 'onboarding' | 'interview' | 'processing' | 'reveal';
-type InterviewMode = 'voice-text' | 'text';
+type AppState = 'onboarding' | 'interview' | 'processing' | 'reveal';
+type InterviewMode = 'sonic' | 'voice-text' | 'text';
 
 interface IdentityDocument {
   raw: string; // full markdown document as returned by the API
@@ -45,12 +47,13 @@ interface ProtocolSignals {
 })
 export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   private _destroyRef = inject(DestroyRef);
+  private sonicService = inject(SonicService);
 
   @ViewChild('conversationBody') conversationBody!: ElementRef<HTMLDivElement>;
 
   // ── Core state ─────────────────────────────────────────────────────────────
 
-  currentState = signal<AppState>('welcome');
+  currentState = signal<AppState>('onboarding');
   interviewMode = signal<InterviewMode>('voice-text');
   identityDoc = signal<IdentityDocument | null>(null);
   userName = signal<string>('');
@@ -94,6 +97,53 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   showNamePrompt = signal<boolean>(false);
   nameInput = signal<string>('');
 
+  // ── Sonic state ─────────────────────────────────────────────────────────────
+
+  readonly sonicState = computed<'connecting' | 'ready' | 'listening' | 'speaking' | 'complete' | 'error'>(() => {
+    if (this.sonicService.error()) return 'error';
+    if (this.sonicService.conversationComplete()) return 'complete';
+    if (this.sonicService.agentSpeaking()) return 'speaking';
+    if (this.sonicService.listening()) return 'listening';
+    if (this.sonicService.sessionReady()) return 'ready';
+    return 'connecting';
+  });
+
+  readonly sonicError = this.sonicService.error;
+  readonly isMicActive = this.sonicService.listening;
+  readonly isSonicSpeaking = computed(() => this.sonicService.agentSpeaking());
+  readonly isSonicListening = computed(() => this.sonicService.listening());
+  readonly supportsSonic = signal<boolean>(this._checkSonicSupport());
+
+  // Sync fullTranscript → messages during sonic mode
+  private readonly _sonicTranscriptEffect = effect(() => {
+    if (this.interviewMode() !== 'sonic') return;
+    const transcript = this.sonicService.fullTranscript();
+    this.messages.set(
+      transcript.map((t: SonicTranscriptEntry) => ({
+        role: t.role,
+        text: t.text,
+        timestamp: new Date(),
+      })),
+    );
+  }, { allowSignalWrites: true });
+
+  // Start mic once the sonic session is ready
+  private readonly _sonicReadyEffect = effect(() => {
+    if (this.interviewMode() !== 'sonic') return;
+    if (!this.sonicService.sessionReady() || this.sonicService.listening()) return;
+    void this.sonicService.startListening();
+  });
+
+  // Transition to processing when sonic conversation ends
+  private readonly _sonicCompleteEffect = effect(() => {
+    if (this.interviewMode() !== 'sonic') return;
+    if (!this.sonicService.conversationComplete()) return;
+    this.conversationComplete.set(true);
+    this.addTimer(setTimeout(() => {
+      void this.transitionToProcessing();
+    }, 800));
+  }, { allowSignalWrites: true });
+
   // Profile publishing
   profileUrl = signal<string>('');
   profileSlug = signal<string>('');
@@ -130,15 +180,11 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   private timers: ReturnType<typeof setTimeout>[] = [];
 
   ngOnInit(): void {
-    // intentionally empty — animation starts on user action, not on load
-  }
-
-  enterOnboarding(): void {
-    this.currentState.set('onboarding');
     this.startOnboardingAnimation();
   }
 
   ngOnDestroy(): void {
+    this.sonicService.disconnect();
     this.stopRecording();
     this.timers.forEach(clearTimeout);
     if (window.speechSynthesis) window.speechSynthesis.cancel();
@@ -196,8 +242,43 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     this.startInterview();
   }
 
+  private _checkSonicSupport(): boolean {
+    if (navigator.userAgent.toLowerCase().includes('firefox')) return false;
+    try {
+      const ctx = new AudioContext();
+      const hasWorklet = 'audioWorklet' in ctx;
+      void ctx.close();
+      return hasWorklet;
+    } catch {
+      return false;
+    }
+  }
+
+  private async _startSonicSession(): Promise<void> {
+    try {
+      await this.sonicService.connect();
+      this.sonicService.startSession('', this.cvText() || undefined);
+      // _sonicReadyEffect handles startListening() once sessionReady is true
+    } catch (err) {
+      console.error('[Sonic] Start error:', err);
+    }
+  }
+
+  sendSonicText(): void {
+    const text = this.currentTextInput().trim();
+    if (!text) return;
+    this.sonicService.sendText(text);
+    this.currentTextInput.set('');
+  }
+
   async startInterview(): Promise<void> {
     this.currentState.set('interview');
+
+    if (this.interviewMode() === 'sonic') {
+      await this._startSonicSession();
+      return;
+    }
+
     this.agentTyping.set(true);
 
     await new Promise((resolve) => setTimeout(resolve, 600));
@@ -300,8 +381,24 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       return;
     }
 
+    // Detect the best supported MIME type for this browser
+    const preferredTypes = [
+      'audio/webm; codecs=opus',
+      'audio/webm',
+      'audio/ogg; codecs=opus',
+      'audio/ogg',
+      'audio/mp4',
+    ];
+    const supportedType = preferredTypes.find(t => MediaRecorder.isTypeSupported(t)) ?? '';
+
     this.audioChunks = [];
-    this.mediaRecorder = new MediaRecorder(this.recordingStream);
+    this.mediaRecorder = supportedType
+      ? new MediaRecorder(this.recordingStream, { mimeType: supportedType })
+      : new MediaRecorder(this.recordingStream);
+
+    // Store the actual MIME type being used
+    const actualMimeType = this.mediaRecorder.mimeType;
+    console.log('Recording with MIME type:', actualMimeType);
 
     this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
       if (event.data.size > 0) {
@@ -310,12 +407,12 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     };
 
     this.mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(this.audioChunks, { type: 'audio/ogg; codecs=opus' });
+      // Use the actual MIME type from the recorder, not a hardcoded one
+      const audioBlob = new Blob(this.audioChunks, { type: actualMimeType || 'audio/webm' });
       this.audioChunks = [];
       this.isRecording.set(false);
 
       if (audioBlob.size < 1000) {
-        // Too small — user probably did not speak
         return;
       }
 
@@ -326,12 +423,38 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     this.isRecording.set(true);
   }
 
+  // Decode any browser audio format (WebM, OGG, MP4) to raw 16-bit PCM at 16 kHz.
+  // AudioContext.decodeAudioData handles whatever the browser recorded,
+  // and resampling to 16 kHz is requested via the AudioContext constructor.
+  // Amazon Transcribe Streaming accepts raw PCM without a container header.
+  private async convertToPcm(audioBlob: Blob): Promise<{ pcmBlob: Blob; sampleRate: number }> {
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const audioContext = new AudioContext({ sampleRate: 16000 });
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    await audioContext.close();
+
+    const channelData = audioBuffer.getChannelData(0); // mono — channel 0 is sufficient for speech
+    const int16 = new Int16Array(channelData.length);
+    for (let i = 0; i < channelData.length; i++) {
+      const s = Math.max(-1, Math.min(1, channelData[i]));
+      int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+
+    return {
+      pcmBlob: new Blob([int16.buffer], { type: 'audio/pcm' }),
+      sampleRate: audioBuffer.sampleRate,
+    };
+  }
+
   private async transcribeAndSubmit(audioBlob: Blob): Promise<void> {
     this.agentTyping.set(true); // show thinking indicator while transcribing
 
     try {
+      const { pcmBlob, sampleRate } = await this.convertToPcm(audioBlob);
+
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.ogg');
+      formData.append('audio', pcmBlob, 'recording.pcm');
+      formData.append('sampleRate', sampleRate.toString());
 
       const response = await fetch(`${environment.apiUrl}/api/transcribe`, {
         method: 'POST',

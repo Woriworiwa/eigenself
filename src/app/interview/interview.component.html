@@ -2,74 +2,6 @@
   @switch (currentState()) {
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         STATE -1 — WELCOME (human screen, no AI yet)
-    ════════════════════════════════════════════════════════════════════════ -->
-    @case ('welcome') {
-      <main class="state welcome-state" role="main" aria-label="Welcome to Eigenself">
-        <div class="welcome-container">
-
-          <div class="welcome-hero">
-            <h1 class="welcome-headline">
-              You know who you are.<br>
-              You just haven't had the right conversation yet.
-            </h1>
-          </div>
-
-          <div class="welcome-explanation">
-            <p class="welcome-body">
-              We are going to have a conversation — not a form. I will ask you
-              questions about how you actually think, what drives you, and what
-              makes you different from everyone with the same job title or the
-              same CV.
-            </p>
-            <p class="welcome-body">
-              At the end, you will have a document that captures your professional
-              identity in your own voice. You can share it with employers, with AI
-              tools, with anyone who needs to understand you quickly.
-            </p>
-            <p class="welcome-body">
-              It takes about fifteen minutes.<br>
-              There are no wrong answers. You cannot fail this.
-            </p>
-          </div>
-
-          <div class="welcome-what-you-get">
-            <p class="welcome-what-label">What you walk away with:</p>
-            <ul class="welcome-outputs" aria-label="What Eigenself produces">
-              <li class="welcome-output-item">
-                <span class="output-dot" aria-hidden="true"></span>
-                <span>A complete identity document — who you are, how you think, what makes you you</span>
-              </li>
-              <li class="welcome-output-item">
-                <span class="output-dot" aria-hidden="true"></span>
-                <span>A professional bio you can use anywhere — LinkedIn, portfolio, cover letters</span>
-              </li>
-              <li class="welcome-output-item">
-                <span class="output-dot" aria-hidden="true"></span>
-                <span>An AI-ready profile — drop it into any AI agent and it will represent you accurately</span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="welcome-cta">
-            <button
-              class="btn btn--primary btn--welcome-cta"
-              type="button"
-              (click)="enterOnboarding()"
-              aria-label="Get started"
-            >
-              Get started
-            </button>
-            <p class="welcome-reassurance" aria-hidden="true">
-              Free. No account required. Your data stays on your device.
-            </p>
-          </div>
-
-        </div>
-      </main>
-    }
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
          STATE 0 — ONBOARDING
     ════════════════════════════════════════════════════════════════════════ -->
     @case ('onboarding') {
@@ -140,21 +72,24 @@
 
             </div>
 
-            <!-- Mode buttons — unchanged -->
+            <!-- Mode buttons -->
             <div class="onboarding-actions">
-              <button
-                class="btn btn--primary"
-                type="button"
-                (click)="selectMode('voice-text')"
-                aria-label="Start with voice"
-              >
-                🎤&nbsp; Speak
-              </button>
+              @if (supportsSonic()) {
+                <button
+                  class="btn btn--primary"
+                  type="button"
+                  (click)="selectMode('sonic')"
+                  aria-label="Use voice with Nova 2 Sonic"
+                >
+                  🎙️&nbsp; Voice
+                  <span class="mode-badge">Sonic</span>
+                </button>
+              }
               <button
                 class="btn btn--secondary"
                 type="button"
                 (click)="selectMode('text')"
-                aria-label="Start with text"
+                aria-label="Type your answers"
               >
                 ⌨️&nbsp; Type
               </button>
@@ -205,6 +140,59 @@
         <!-- Input area — shown only when agent is not typing and conversation not complete -->
         @if (!conversationComplete()) {
           <div class="conversation-input-area">
+
+            @if (interviewMode() === 'sonic') {
+              <div
+                class="sonic-ui"
+                [class.sonic-ui--speaking]="isSonicSpeaking()"
+                [class.sonic-ui--listening]="isSonicListening()"
+              >
+                <!-- Animated pulse ring -->
+                <div class="sonic-pulse" aria-hidden="true">
+                  <div class="sonic-pulse__ring"></div>
+                  <div class="sonic-pulse__ring sonic-pulse__ring--delay"></div>
+                  <div class="sonic-pulse__icon">
+                    @if (isMicActive()) { 🎙️ } @else { ⏳ }
+                  </div>
+                </div>
+
+                <!-- Status label -->
+                <p class="sonic-status" aria-live="polite">
+                  @switch (sonicState()) {
+                    @case ('connecting') { Connecting… }
+                    @case ('ready') { Starting microphone… }
+                    @case ('listening') { Listening… }
+                    @case ('speaking') { Speaking… }
+                    @case ('complete') { Done }
+                    @case ('error') { {{ sonicError() }} }
+                  }
+                </p>
+
+                <!-- Text fallback -->
+                <div class="sonic-text-input">
+                  <label for="sonic-text-field" class="visually-hidden">Type a message</label>
+                  <input
+                    id="sonic-text-field"
+                    class="text-input input--sonic"
+                    type="text"
+                    placeholder="Or type here instead…"
+                    [value]="currentTextInput()"
+                    (input)="onCurrentTextInput($event)"
+                    (keydown.enter)="sendSonicText()"
+                    aria-label="Type a message"
+                  />
+                  <button
+                    class="btn btn--send-text"
+                    type="button"
+                    (click)="sendSonicText()"
+                    [disabled]="!currentTextInput().trim()"
+                    aria-label="Send typed message"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            }
 
             @if (interviewMode() === 'text') {
               <div class="input-row">

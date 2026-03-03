@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-import { InterviewComponent } from './interview/interview.component';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [InterviewComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.css',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
 })
 export class App {}

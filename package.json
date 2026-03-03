@@ -7,7 +7,7 @@
     "build": "nx build --configuration production",
     "watch": "nx build --watch --configuration development",
     "test": "nx test",
-    "server": "tsx watch src/server/server.ts",
+    "server": "tsx watch --tsconfig tsconfig.server.json src/server/server.ts",
     "server:prod": "node dist/server/server.js",
     "server:build": "tsc -p tsconfig.server.json"
   },

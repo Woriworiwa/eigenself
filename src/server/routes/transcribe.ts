@@ -11,8 +11,8 @@
 import { Router, Request, Response } from 'express';
 import { InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import multer from 'multer';
-import { bedrock } from '../lib/aws.js';
-import { NOVA_LITE_MODEL_ID } from '../lib/models.js';
+import { bedrock } from '../lib/aws';
+import { NOVA_LITE_MODEL_ID } from '../lib/models';
 
 export const transcribeRouter = Router();
 

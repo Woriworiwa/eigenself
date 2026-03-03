@@ -14,10 +14,10 @@ import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 import { PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
-import { bedrock, s3, cloudfront, dynamo } from '../lib/aws.js';
-import { NOVA_LITE_MODEL_ID } from '../lib/models.js';
-import { PROFILE_HTML_PROMPT } from '../prompts/profile-html.js';
-import { generateSlug } from '../lib/slug.js';
+import { bedrock, s3, cloudfront, dynamo } from '../lib/aws';
+import { NOVA_LITE_MODEL_ID } from '../lib/models';
+import { PROFILE_HTML_PROMPT } from '../prompts/profile-html';
+import { generateSlug } from '../lib/slug';
 
 export const profileRouter = Router();
 

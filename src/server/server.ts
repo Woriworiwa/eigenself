@@ -16,13 +16,13 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
-import { chatRouter }       from './routes/chat.js';
-import { cvRouter }         from './routes/cv.js';
-import { documentRouter }   from './routes/document.js';
-import { profileRouter }    from './routes/profile.js';
-import { transcribeRouter } from './routes/transcribe.js';
-import { registerSonicHandlers } from './socket/sonic-handlers.js';
-import { NOVA_LITE_MODEL_ID, NOVA_SONIC_MODEL_ID } from './lib/models.js';
+import { chatRouter }       from './routes/chat';
+import { cvRouter }         from './routes/cv';
+import { documentRouter }   from './routes/document';
+import { profileRouter }    from './routes/profile';
+import { transcribeRouter } from './routes/transcribe';
+import { registerSonicHandlers } from './socket/sonic-handlers';
+import { NOVA_LITE_MODEL_ID, NOVA_SONIC_MODEL_ID } from './lib/models';
 
 const PORT = Number(process.env['PORT'] ?? 3000);
 

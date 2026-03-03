@@ -8,10 +8,10 @@
 
 import { Router, Request, Response } from 'express';
 import { ConverseCommand, ConversationRole } from '@aws-sdk/client-bedrock-runtime';
-import { bedrock } from '../lib/aws.js';
-import { NOVA_LITE_MODEL_ID } from '../lib/models.js';
-import { SYSTEM_PROMPT } from '../prompts/system.js';
-import type { Message } from '../types.js';
+import { bedrock } from '../lib/aws';
+import { NOVA_LITE_MODEL_ID } from '../lib/models';
+import { SYSTEM_PROMPT } from '../prompts/system';
+import type { Message } from '../types';
 
 export const chatRouter = Router();
 

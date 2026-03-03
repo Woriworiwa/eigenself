@@ -7,10 +7,10 @@
 
 import { Router, Request, Response } from 'express';
 import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
-import { bedrock } from '../lib/aws.js';
-import { NOVA_LITE_MODEL_ID } from '../lib/models.js';
-import { DOCUMENT_PROMPT } from '../prompts/document.js';
-import type { Message } from '../types.js';
+import { bedrock } from '../lib/aws';
+import { NOVA_LITE_MODEL_ID } from '../lib/models';
+import { DOCUMENT_PROMPT } from '../prompts/document';
+import type { Message } from '../types';
 
 export const documentRouter = Router();
 

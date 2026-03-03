@@ -13,8 +13,8 @@
  */
 
 import type { Server as SocketIOServer, Socket } from 'socket.io';
-import { createSonicSession } from './sonic-session.js';
-import type { SonicSession } from '../types.js';
+import { createSonicSession } from './sonic-session';
+import type { SonicSession } from '../types';
 
 // Active sessions keyed by socket.id
 const sessions = new Map<string, SonicSession>();

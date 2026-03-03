@@ -1,0 +1,46 @@
+<main class="state" role="main" aria-label="Building your identity document">
+
+  @if (showNamePrompt()) {
+    <!-- Name prompt — shown when name could not be extracted from CV -->
+    <div class="name-prompt-container">
+      <p class="name-prompt-message">
+        One last thing — what is your name?
+      </p>
+      <div class="name-prompt-input-row">
+        <label for="name-input" class="visually-hidden">Your full name</label>
+        <input
+          id="name-input"
+          class="text-input"
+          type="text"
+          [value]="nameInput()"
+          (input)="onNameInput($event)"
+          (keydown)="handleNameKeydown($event)"
+          placeholder="Your full name"
+          autocomplete="name"
+          autofocus
+        >
+        <button
+          class="send-button"
+          type="button"
+          (click)="confirmName()"
+          aria-label="Continue"
+        >→</button>
+      </div>
+    </div>
+  } @else {
+    <!-- Processing spinner -->
+    <div class="processing-container">
+      <p class="processing-message" aria-live="polite">
+        "{{ processingStatus() }}"
+      </p>
+      <div class="dots-field" aria-hidden="true" role="presentation">
+        <div class="processing-dot"></div>
+        <div class="processing-dot"></div>
+        <div class="processing-dot"></div>
+        <div class="processing-dot"></div>
+        <div class="processing-dot"></div>
+      </div>
+    </div>
+  }
+
+</main>

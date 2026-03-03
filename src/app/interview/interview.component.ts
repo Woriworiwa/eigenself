@@ -4,52 +4,29 @@ import {
   computed,
   effect,
   OnDestroy,
-  OnInit,
-  AfterViewChecked,
   ChangeDetectionStrategy,
   inject,
   DestroyRef,
-  ViewChild,
-  ElementRef,
 } from '@angular/core';
 
 import { environment } from '../../environments/environment';
 import { SonicService, SonicTranscriptEntry } from '../services/sonic.service';
-
-type AppState = 'onboarding' | 'interview' | 'processing' | 'reveal';
-type InterviewMode = 'sonic' | 'voice-text' | 'text';
-
-interface IdentityDocument {
-  raw: string; // full markdown document as returned by the API
-  name: string; // extracted name, or 'You' if unknown
-  generated: string; // ISO date string
-}
-
-interface Message {
-  role: 'agent' | 'user';
-  text: string;
-  timestamp: Date;
-}
-
-interface ProtocolSignals {
-  story: boolean;
-  energy: boolean;
-  voice: boolean;
-  human_edge: boolean;
-  expertise: boolean;
-}
+import { AppState, InterviewMode, IdentityDocument, Message, ProtocolSignals } from './interview.types';
+import { OnboardingComponent } from './onboarding/onboarding.component';
+import { InterviewStateComponent } from './interview-state/interview-state.component';
+import { ProcessingComponent } from './processing/processing.component';
+import { RevealComponent } from './reveal/reveal.component';
 
 @Component({
   selector: 'app-interview',
   templateUrl: './interview.component.html',
   styleUrl: './interview.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [OnboardingComponent, InterviewStateComponent, ProcessingComponent, RevealComponent],
 })
-export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
+export class InterviewComponent implements OnDestroy {
   private _destroyRef = inject(DestroyRef);
   private sonicService = inject(SonicService);
-
-  @ViewChild('conversationBody') conversationBody!: ElementRef<HTMLDivElement>;
 
   // ── Core state ─────────────────────────────────────────────────────────────
 
@@ -95,7 +72,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
 
   // Name prompt state
   showNamePrompt = signal<boolean>(false);
-  nameInput = signal<string>('');
 
   // ── Sonic state ─────────────────────────────────────────────────────────────
 
@@ -151,19 +127,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   profilePublishError = signal<string>('');
   profileUrlCopied = signal<boolean>(false);
 
-  // ── Onboarding ─────────────────────────────────────────────────────────────
-
-  readonly onboardingParagraphs: string[] = [
-    "Before we start — I want to tell you what this is, and what it isn't.",
-    'I am not going to ask you to list your skills or summarise your experience. I have read enough CVs. I am more interested in how you actually think, what lights you up, and what makes you different from everyone with the same job title.',
-    'We are going to have a real conversation. I will ask you things. You answer however feels natural — there is no script, no right answer, no way to get this wrong.',
-    'At the end, I will build something that captures who you actually are — not just what you have done.',
-    "When you are ready — tell me how you'd like to talk.",
-  ];
-
-  visibleParagraphs = signal<number>(0);
-  onboardingComplete = signal<boolean>(false);
-
   // ── Derived state ──────────────────────────────────────────────────────────
 
   progressPercent = computed(() => {
@@ -179,28 +142,11 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
   private recordingStream: MediaStream | null = null;
   private timers: ReturnType<typeof setTimeout>[] = [];
 
-  ngOnInit(): void {
-    this.startOnboardingAnimation();
-  }
-
   ngOnDestroy(): void {
     this.sonicService.disconnect();
     this.stopRecording();
     this.timers.forEach(clearTimeout);
     if (window.speechSynthesis) window.speechSynthesis.cancel();
-  }
-
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
-  }
-
-  private scrollToBottom(): void {
-    try {
-      const el = this.conversationBody?.nativeElement;
-      if (el) el.scrollTop = el.scrollHeight;
-    } catch {
-      /* ignore */
-    }
   }
 
   private addTimer(t: ReturnType<typeof setTimeout>): ReturnType<typeof setTimeout> {
@@ -217,22 +163,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
       this.recordingStream = null;
     }
     this.isRecording.set(false);
-  }
-
-  // ── Onboarding animation ───────────────────────────────────────────────────
-
-  private startOnboardingAnimation(): void {
-    let index = 0;
-    const showNext = (): void => {
-      index++;
-      this.visibleParagraphs.set(index);
-      if (index < this.onboardingParagraphs.length) {
-        setTimeout(showNext, 600);
-      } else {
-        setTimeout(() => this.onboardingComplete.set(true), 300);
-      }
-    };
-    setTimeout(showNext, 400);
   }
 
   // ── State transitions ──────────────────────────────────────────────────────
@@ -624,10 +554,6 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     }
   }
 
-  onCurrentTextInput(event: Event): void {
-    this.currentTextInput.set((event.target as HTMLInputElement).value);
-  }
-
   // ── Voice output ───────────────────────────────────────────────────────────
 
   private speakText(text: string): Promise<void> {
@@ -656,31 +582,18 @@ export class InterviewComponent implements OnDestroy, AfterViewChecked, OnInit {
     });
   }
 
-  // ── Name prompt ────────────────────────────────────────────────────────────
+  // ── Name confirmed (from ProcessingComponent) ──────────────────────────────
 
-  onNameInput(event: Event): void {
-    this.nameInput.set((event.target as HTMLInputElement).value);
-  }
-
-  confirmName(): void {
-    const name = this.nameInput().trim();
-    if (!name) return;
+  onNameConfirmed(name: string): void {
     this.userName.set(name);
     this.nameConfirmed.set(true);
     this.showNamePrompt.set(false);
     void this.transitionToProcessing();
   }
 
-  handleNameKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      this.confirmName();
-    }
-  }
-
   // ── Processing & generation ────────────────────────────────────────────────
 
-  private async transitionToProcessing(): Promise<void> {
+  async transitionToProcessing(): Promise<void> {
     this.stopRecording();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     this.currentState.set('processing');

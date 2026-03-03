@@ -1,0 +1,219 @@
+<div class="iv-shell" role="main" aria-label="Interview in progress">
+
+  <!-- ── HEADER ──────────────────────────────────────────────────── -->
+  <header class="iv-header">
+    <div class="iv-header__brand">
+      <div class="iv-header__icon" aria-hidden="true">
+        <span class="material-symbols-outlined">graphic_eq</span>
+      </div>
+      <h2 class="iv-header__title">Nova 2 Sonic</h2>
+    </div>
+    <div class="iv-header__actions">
+      <button class="iv-btn-end" type="button" (click)="endInterview.emit()">
+        End Interview
+      </button>
+      <button class="iv-btn-icon" type="button" aria-label="Settings">
+        <span class="material-symbols-outlined">settings</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── VOICE STATUS ────────────────────────────────────────────── -->
+  <section class="iv-voice-status"
+           [class.iv-voice-status--speaking]="isSonicSpeaking()"
+           [class.iv-voice-status--listening]="isSonicListening() || isRecording()"
+           aria-live="polite">
+    <div class="iv-mic-wrapper" aria-hidden="true">
+      <div class="iv-mic-pulse"></div>
+      <div class="iv-mic-core">
+        <span class="material-symbols-outlined">
+          {{ isSonicSpeaking() ? 'graphic_eq' : 'mic' }}
+        </span>
+      </div>
+    </div>
+    <h3 class="iv-voice-status__label">
+      @if (isSonicSpeaking()) { Speaking… }
+      @else if (isSonicListening() || isRecording()) { Listening… }
+      @else if (agentTyping()) { Thinking… }
+      @else { Ready }
+    </h3>
+    <p class="iv-voice-status__sublabel">
+      @if (voiceTranscript()) {
+        "{{ voiceTranscript() }}"
+      } @else if (isSonicSpeaking()) {
+        Nova is answering your question
+      } @else if (isSonicListening() || isRecording()) {
+        Processing your response
+      } @else if (agentTyping()) {
+        Analysing your answer
+      } @else {
+        Waiting for you
+      }
+    </p>
+  </section>
+
+  <!-- ── CONVERSATION ────────────────────────────────────────────── -->
+  <main class="iv-conversation" #conversationBody>
+    <div class="iv-conversation__inner">
+
+      @for (message of messages(); track $index) {
+
+        @if (message.role === 'agent') {
+          <!-- Nova / agent bubble -->
+          <div class="iv-msg iv-msg--nova">
+            <div class="iv-msg__avatar" aria-hidden="true">
+              <span class="material-symbols-outlined">smart_toy</span>
+            </div>
+            <div class="iv-msg__body">
+              <p class="iv-msg__sender">Nova</p>
+              <div class="iv-msg__bubble iv-msg__bubble--nova">
+                <p>{{ message.text }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (message.role === 'user') {
+          <!-- User bubble -->
+          <div class="iv-msg iv-msg--user">
+            <div class="iv-msg__avatar iv-msg__avatar--user" aria-hidden="true">
+              <span class="material-symbols-outlined">person</span>
+            </div>
+            <div class="iv-msg__body iv-msg__body--user">
+              <p class="iv-msg__sender iv-msg__sender--user">You</p>
+              <div class="iv-msg__bubble iv-msg__bubble--user">
+                <p>{{ message.text }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+      }
+
+      @if (agentTyping()) {
+        <div class="iv-msg iv-msg--nova" aria-label="Agent is thinking">
+          <div class="iv-msg__avatar" aria-hidden="true">
+            <span class="material-symbols-outlined">smart_toy</span>
+          </div>
+          <div class="iv-msg__body">
+            <p class="iv-msg__sender">Nova</p>
+            <div class="iv-msg__bubble iv-msg__bubble--nova iv-msg__bubble--typing">
+              <span class="iv-typing-dot"></span>
+              <span class="iv-typing-dot"></span>
+              <span class="iv-typing-dot"></span>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+  </main>
+
+  <!-- ── FOOTER CONTROLS ─────────────────────────────────────────── -->
+  @if (!conversationComplete()) {
+    <footer class="iv-footer">
+      <div class="iv-controls">
+
+        <!-- Mute / unmute (voice-text mode) -->
+        @if (interviewMode() === 'voice-text' || interviewMode() === 'sonic') {
+          <button
+            class="iv-ctrl"
+            [class.iv-ctrl--active]="isRecording()"
+            type="button"
+            (click)="micClicked.emit()"
+            [attr.aria-label]="isRecording() ? 'Stop recording' : 'Start recording'"
+          >
+            <div class="iv-ctrl__icon">
+              <span class="material-symbols-outlined">
+                {{ isRecording() ? 'mic' : 'mic_off' }}
+              </span>
+            </div>
+            <span class="iv-ctrl__label">{{ isRecording() ? 'Send' : 'Mute' }}</span>
+          </button>
+        }
+
+        <!-- Pause / resume -->
+        <button
+          class="iv-ctrl"
+          [class.iv-ctrl--active]="false"
+          type="button"
+          aria-label="Pause interview"
+        >
+          <div class="iv-ctrl__icon">
+            <span class="material-symbols-outlined">pause</span>
+          </div>
+          <span class="iv-ctrl__label">Pause</span>
+        </button>
+
+        <!-- Text input toggle -->
+        <button
+          class="iv-ctrl"
+          type="button"
+          (click)="modeToggled.emit()"
+          aria-label="Toggle text input"
+        >
+          <div class="iv-ctrl__icon">
+            <span class="material-symbols-outlined">keyboard</span>
+          </div>
+          <span class="iv-ctrl__label">Text</span>
+        </button>
+
+      </div>
+
+      <!-- Text input row — shown in text mode -->
+      @if (interviewMode() === 'text') {
+        <div class="iv-text-input-row">
+          <label for="iv-text-field" class="visually-hidden">Your message</label>
+          <input
+            id="iv-text-field"
+            class="iv-text-input"
+            type="text"
+            [value]="currentTextInput()"
+            (input)="onTextChange($event)"
+            (keydown)="textKeydown.emit($any($event))"
+            [disabled]="agentTyping()"
+            placeholder="Type your answer…"
+            autocomplete="off"
+          />
+          <button
+            class="iv-text-send"
+            type="button"
+            (click)="textSubmit.emit()"
+            [disabled]="agentTyping() || !currentTextInput().trim()"
+            aria-label="Send"
+          >
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      }
+
+      <!-- Sonic text fallback -->
+      @if (interviewMode() === 'sonic') {
+        <div class="iv-text-input-row">
+          <label for="iv-sonic-field" class="visually-hidden">Type a message</label>
+          <input
+            id="iv-sonic-field"
+            class="iv-text-input"
+            type="text"
+            placeholder="Or type here instead…"
+            [value]="currentTextInput()"
+            (input)="onTextChange($event)"
+            (keydown.enter)="sonicTextSubmit.emit()"
+            aria-label="Type a message"
+          />
+          <button
+            class="iv-text-send"
+            type="button"
+            (click)="sonicTextSubmit.emit()"
+            [disabled]="!currentTextInput().trim()"
+            aria-label="Send typed message"
+          >
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      }
+
+    </footer>
+  }
+
+</div>

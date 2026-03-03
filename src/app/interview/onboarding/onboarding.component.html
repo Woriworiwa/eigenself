@@ -1,0 +1,94 @@
+<main class="state onboarding-state" role="main" aria-label="Welcome">
+  <div class="onboarding-container">
+
+    <div class="onboarding-message" aria-live="polite">
+      @for (para of onboardingParagraphs.slice(0, visibleParagraphs()); track $index) {
+        <p class="onboarding-para">{{ para }}</p>
+      }
+    </div>
+
+    @if (onboardingComplete()) {
+
+      <!-- CV Upload Zone (optional) -->
+      <div class="cv-upload-zone">
+
+        @if (!cvFileName()) {
+          <label class="cv-upload-label" for="cv-file-input">
+            <span class="cv-upload-icon" aria-hidden="true">📄</span>
+            <span class="cv-upload-text">
+              @if (cvUploading()) {
+                Reading your CV…
+              } @else {
+                Do you have a CV?
+              }
+            </span>
+            <span class="cv-upload-subtext">
+              @if (!cvUploading()) {
+                If you share it, I will read it before we start — so I won't ask
+                you things you have already written down. I will only ask about
+                what your CV can't tell me.
+              }
+            </span>
+            <span class="cv-upload-formats">PDF or Word · optional</span>
+            <input
+              id="cv-file-input"
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              (change)="cvFileChanged.emit($event)"
+              [disabled]="cvUploading()"
+              class="cv-file-input-hidden"
+              aria-label="Upload your CV — PDF or Word document, optional"
+            >
+          </label>
+
+          @if (cvError()) {
+            <p class="cv-error" role="alert">{{ cvError() }}</p>
+          }
+        } @else {
+          <!-- CV loaded state -->
+          <div class="cv-loaded">
+            <span class="cv-loaded-icon" aria-hidden="true">✓</span>
+            <span class="cv-loaded-name">{{ cvFileName() }}</span>
+            <button
+              class="cv-remove-btn"
+              type="button"
+              (click)="cvRemoved.emit()"
+              aria-label="Remove CV"
+            >
+              ✕
+            </button>
+          </div>
+          <p class="cv-loaded-note">
+            I will read this before we start.
+          </p>
+        }
+
+      </div>
+
+      <!-- Mode buttons -->
+      <div class="onboarding-actions">
+        @if (supportsSonic()) {
+          <button
+            class="btn btn--primary"
+            type="button"
+            (click)="modeSelected.emit('sonic')"
+            aria-label="Use voice with Nova 2 Sonic"
+          >
+            🎙️&nbsp; Voice
+            <span class="mode-badge">Sonic</span>
+          </button>
+        }
+        <button
+          class="btn btn--secondary"
+          type="button"
+          (click)="modeSelected.emit('text')"
+          aria-label="Type your answers"
+        >
+          ⌨️&nbsp; Type
+        </button>
+      </div>
+
+    }
+
+  </div>
+</main>

@@ -1,0 +1,151 @@
+<main class="state reveal-state" role="main" aria-label="Your identity document">
+  <div class="reveal-container">
+
+    <!-- Header -->
+    <div class="reveal-header">
+      <h1 class="reveal-title">
+        Your AI identity document is ready.
+      </h1>
+      <p class="reveal-subtitle">
+        Drop it into any AI agent. It will respond as you.
+      </p>
+    </div>
+
+    <!-- Document panel -->
+    <div class="reveal-document-panel" aria-label="Identity document">
+      <div class="document-content">
+        <pre class="document-pre">{{ identityDoc()?.raw }}</pre>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="reveal-actions">
+      <button
+        class="btn btn--primary btn--reveal-copy"
+        type="button"
+        (click)="copyDocumentClicked.emit()"
+        aria-label="Copy identity document to clipboard"
+      >
+        Copy document &nbsp;↗
+      </button>
+      <button
+        class="btn btn--secondary"
+        type="button"
+        (click)="downloadDocumentClicked.emit()"
+        aria-label="Download as markdown file"
+      >
+        Download .md
+      </button>
+    </div>
+
+    @if (copyConfirmation()) {
+      <p class="copy-confirmation" role="status" aria-live="polite">
+        {{ copyConfirmation() }}
+      </p>
+    }
+
+    <!-- Profile publishing section -->
+    <div class="profile-publish-section">
+
+      <div class="profile-publish-divider" aria-hidden="true"></div>
+
+      <div class="profile-publish-header">
+        <h2 class="profile-publish-title">Want a public profile page?</h2>
+        <p class="profile-publish-desc">
+          We will generate a designed web page from your identity document
+          and host it for you. You get a private link — not indexed by search engines,
+          only accessible to people you share it with.
+        </p>
+      </div>
+
+      @if (!profileUrl()) {
+        <!-- Not yet published -->
+        <button
+          class="btn btn--publish"
+          type="button"
+          (click)="publishProfileClicked.emit()"
+          [disabled]="profilePublishing()"
+          aria-label="Publish your profile page"
+        >
+          @if (profilePublishing()) {
+            Building your page…
+          } @else {
+            Publish profile page
+          }
+        </button>
+
+        @if (profilePublishing()) {
+          <p class="profile-publish-status" aria-live="polite">
+            Generating your page and uploading it — this takes about 20 seconds.
+          </p>
+        }
+
+        @if (profilePublishError()) {
+          <p class="profile-publish-error" role="alert">
+            {{ profilePublishError() }}
+          </p>
+        }
+
+      } @else {
+        <!-- Published — show the URL -->
+        <div class="profile-url-card">
+
+          <div class="profile-url-live-badge" aria-label="Profile is live">
+            <span class="live-dot" aria-hidden="true"></span>
+            Live
+          </div>
+
+          <a
+            class="profile-url-link"
+            [href]="profileUrl()"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open your profile page"
+          >
+            {{ profileUrl() }}
+          </a>
+
+          <div class="profile-url-actions">
+            <button
+              class="btn btn--secondary btn--url-copy"
+              type="button"
+              (click)="copyProfileUrlClicked.emit()"
+              aria-label="Copy profile URL"
+            >
+              @if (profileUrlCopied()) {
+                Copied ✓
+              } @else {
+                Copy link
+              }
+            </button>
+            <a
+              class="btn btn--outline btn--url-open"
+              [href]="profileUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open ↗
+            </a>
+          </div>
+
+          <button
+            class="profile-republish-btn"
+            type="button"
+            (click)="publishProfileClicked.emit()"
+            [disabled]="profilePublishing()"
+            aria-label="Regenerate profile page"
+          >
+            @if (profilePublishing()) {
+              Updating…
+            } @else {
+              Regenerate page
+            }
+          </button>
+
+        </div>
+      }
+
+    </div>
+
+  </div>
+</main>

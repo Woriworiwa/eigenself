@@ -1,0 +1,168 @@
+// ─── Host ─────────────────────────────────────────────────────────────────────
+
+:host {
+  display: contents;
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ─── Keyframes ────────────────────────────────────────────────────────────────
+
+@keyframes stateIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes dotDrift {
+  0%   { transform: translate(0,   0);   }
+  33%  { transform: translate(4px,  -6px); }
+  66%  { transform: translate(-3px,  4px); }
+  100% { transform: translate(0,   0);   }
+}
+
+// ─── State wrapper ────────────────────────────────────────────────────────────
+
+.state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  animation: stateIn 0.3s ease both;
+}
+
+// ─── Processing ───────────────────────────────────────────────────────────────
+
+.processing-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.processing-message {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.3rem, 3vw, 1.75rem);
+  color: var(--ink);
+  margin-bottom: 3rem;
+  line-height: 1.5;
+}
+
+.dots-field {
+  position: relative;
+  width: 120px;
+  height: 80px;
+}
+
+.processing-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--muted);
+
+  &:nth-child(1) {
+    width: 8px;  height: 8px;  opacity: 0.4;
+    top: 10px;  left: 20px;
+    animation: dotDrift 4.2s ease-in-out infinite;
+  }
+  &:nth-child(2) {
+    width: 12px; height: 12px; opacity: 0.25;
+    top: 50px;  left: 50px;
+    animation: dotDrift 5.5s ease-in-out infinite reverse;
+    animation-delay: 0.7s;
+  }
+  &:nth-child(3) {
+    width: 10px; height: 10px; opacity: 0.5;
+    top: 20px;  left: 85px;
+    animation: dotDrift 3.8s ease-in-out infinite;
+    animation-delay: 1.2s;
+  }
+  &:nth-child(4) {
+    width: 18px; height: 18px; opacity: 0.3;
+    top: 45px;  left: 10px;
+    animation: dotDrift 6.1s ease-in-out infinite reverse;
+    animation-delay: 0.3s;
+  }
+  &:nth-child(5) {
+    width: 14px; height: 14px; opacity: 0.35;
+    top: 5px;   left: 60px;
+    animation: dotDrift 4.8s ease-in-out infinite;
+    animation-delay: 1.8s;
+  }
+}
+
+// ─── Name prompt ──────────────────────────────────────────────────────────────
+
+.name-prompt-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.name-prompt-message {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.name-prompt-input-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.text-input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--ink);
+  transition: border-color 0.15s;
+
+  &::placeholder { color: var(--muted); }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(15, 14, 12, 0.35);
+  }
+}
+
+.send-button {
+  padding: 0.8rem 1.2rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.85; }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}

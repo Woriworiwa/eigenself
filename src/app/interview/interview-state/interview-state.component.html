@@ -1,71 +1,158 @@
-<div class="iv-shell" role="main" aria-label="Interview in progress">
+<div class="iv-shell" [attr.data-mode]="interviewMode()" role="main" aria-label="Interview in progress">
 
-  <!-- ── HEADER ──────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════
+       HEADER — adapts to mode
+       ══════════════════════════════════════════════════════════════ -->
   <header class="iv-header">
+
+    <!-- Brand / mode identity -->
     <div class="iv-header__brand">
       <div class="iv-header__icon" aria-hidden="true">
-        <span class="material-symbols-outlined">graphic_eq</span>
+        <span class="material-symbols-outlined">
+          {{ interviewMode() === 'sonic' ? 'graphic_eq' : (useAgent() ? 'hub' : 'bolt') }}
+        </span>
       </div>
-      <h2 class="iv-header__title">Nova 2 Sonic</h2>
+      <div class="iv-header__title-group">
+        <h2 class="iv-header__title">
+          @if (interviewMode() === 'sonic') { Nova 2 Sonic }
+          @else if (useAgent()) { Bedrock Agent }
+          @else { Nova 2 Lite }
+        </h2>
+        <p class="iv-header__subtitle">
+          @if (interviewMode() === 'sonic') {
+            Real-time voice · Nova 2 Sonic
+          } @else if (useAgent()) {
+            Adaptive interview · Bedrock Agent → Nova 2 Lite
+          } @else {
+            Direct model · Nova 2 Lite
+          }
+        </p>
+      </div>
     </div>
+
     <div class="iv-header__actions">
+
+      <!-- Agent / Direct switch — text modes only -->
+      @if (interviewMode() !== 'sonic') {
+        <div class="iv-mode-switch" role="group" aria-label="Model mode">
+          <button
+            class="iv-mode-switch__opt"
+            [class.iv-mode-switch__opt--active]="!useAgent()"
+            type="button"
+            (click)="useAgent() && agentToggled.emit()"
+            title="Direct call to Nova 2 Lite — no agent orchestration"
+          >
+            <span class="material-symbols-outlined">bolt</span>
+            Direct
+          </button>
+          <button
+            class="iv-mode-switch__opt"
+            [class.iv-mode-switch__opt--active]="useAgent()"
+            type="button"
+            (click)="!useAgent() && agentToggled.emit()"
+            title="Bedrock Agent with adaptive interview orchestration"
+          >
+            <span class="material-symbols-outlined">hub</span>
+            Agent
+          </button>
+        </div>
+      }
+
       <button class="iv-btn-end" type="button" (click)="endInterview.emit()">
         End Interview
-      </button>
-      <button class="iv-btn-icon" type="button" aria-label="Settings">
-        <span class="material-symbols-outlined">settings</span>
       </button>
     </div>
   </header>
 
-  <!-- ── VOICE STATUS ────────────────────────────────────────────── -->
-  <section class="iv-voice-status"
-           [class.iv-voice-status--speaking]="isSonicSpeaking()"
-           [class.iv-voice-status--listening]="isSonicListening() || isRecording()"
-           aria-live="polite">
-    <div class="iv-mic-wrapper" aria-hidden="true">
-      <div class="iv-mic-pulse"></div>
-      <div class="iv-mic-core">
+  <!-- ══════════════════════════════════════════════════════════════
+       STATUS BAR — only in voice modes (sonic / voice-text)
+       ══════════════════════════════════════════════════════════════ -->
+  @if (interviewMode() === 'sonic' || interviewMode() === 'voice-text') {
+    <section class="iv-voice-status"
+             [class.iv-voice-status--speaking]="isSonicSpeaking()"
+             [class.iv-voice-status--listening]="isSonicListening() || isRecording()"
+             aria-live="polite">
+      <div class="iv-mic-wrapper" aria-hidden="true">
+        <div class="iv-mic-pulse"></div>
+        <div class="iv-mic-core">
+          <span class="material-symbols-outlined">
+            {{ isSonicSpeaking() ? 'graphic_eq' : 'mic' }}
+          </span>
+        </div>
+      </div>
+      <div class="iv-voice-status__text">
+        <h3 class="iv-voice-status__label">
+          @if (isSonicSpeaking()) { Speaking… }
+          @else if (isSonicListening() || isRecording()) { Listening… }
+          @else if (agentTyping()) { Thinking… }
+          @else { Ready }
+        </h3>
+        <p class="iv-voice-status__sublabel">
+          @if (voiceTranscript()) {
+            "{{ voiceTranscript() }}"
+          } @else if (isSonicSpeaking()) {
+            Nova is responding
+          } @else if (isSonicListening() || isRecording()) {
+            Processing your voice
+          } @else if (agentTyping()) {
+            Composing next question
+          } @else {
+            Your turn to speak
+          }
+        </p>
+      </div>
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════
+       STATUS BAR — text mode only (no mic, shows model info)
+       ══════════════════════════════════════════════════════════════ -->
+  @if (interviewMode() === 'text') {
+    <section class="iv-text-status" aria-live="polite">
+      <div class="iv-text-status__model">
         <span class="material-symbols-outlined">
-          {{ isSonicSpeaking() ? 'graphic_eq' : 'mic' }}
+          {{ useAgent() ? 'hub' : 'bolt' }}
+        </span>
+        <span>
+          @if (useAgent()) {
+            Bedrock Agent is conducting this interview — questions adapt to your answers
+          } @else {
+            Direct model — Nova 2 Lite with a fixed system prompt
+          }
         </span>
       </div>
-    </div>
-    <h3 class="iv-voice-status__label">
-      @if (isSonicSpeaking()) { Speaking… }
-      @else if (isSonicListening() || isRecording()) { Listening… }
-      @else if (agentTyping()) { Thinking… }
-      @else { Ready }
-    </h3>
-    <p class="iv-voice-status__sublabel">
-      @if (voiceTranscript()) {
-        "{{ voiceTranscript() }}"
-      } @else if (isSonicSpeaking()) {
-        Nova is answering your question
-      } @else if (isSonicListening() || isRecording()) {
-        Processing your response
-      } @else if (agentTyping()) {
-        Analysing your answer
-      } @else {
-        Waiting for you
+      @if (agentTyping()) {
+        <div class="iv-text-status__thinking">
+          <span class="iv-typing-dot"></span>
+          <span class="iv-typing-dot"></span>
+          <span class="iv-typing-dot"></span>
+          <span class="iv-text-status__thinking-label">
+            {{ useAgent() ? 'Agent thinking…' : 'Nova thinking…' }}
+          </span>
+        </div>
       }
-    </p>
-  </section>
+    </section>
+  }
 
-  <!-- ── CONVERSATION ────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════
+       CONVERSATION
+       ══════════════════════════════════════════════════════════════ -->
   <main class="iv-conversation" #conversationBody>
     <div class="iv-conversation__inner">
 
       @for (message of messages(); track $index) {
 
         @if (message.role === 'agent') {
-          <!-- Nova / agent bubble -->
           <div class="iv-msg iv-msg--nova">
             <div class="iv-msg__avatar" aria-hidden="true">
-              <span class="material-symbols-outlined">smart_toy</span>
+              <span class="material-symbols-outlined">
+                {{ interviewMode() === 'sonic' ? 'graphic_eq' : (useAgent() ? 'hub' : 'smart_toy') }}
+              </span>
             </div>
             <div class="iv-msg__body">
-              <p class="iv-msg__sender">Nova</p>
+              <p class="iv-msg__sender">
+                {{ interviewMode() === 'sonic' ? 'Nova 2 Sonic' : (useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite') }}
+              </p>
               <div class="iv-msg__bubble iv-msg__bubble--nova">
                 <p>{{ message.text }}</p>
               </div>
@@ -74,7 +161,6 @@
         }
 
         @if (message.role === 'user') {
-          <!-- User bubble -->
           <div class="iv-msg iv-msg--user">
             <div class="iv-msg__avatar iv-msg__avatar--user" aria-hidden="true">
               <span class="material-symbols-outlined">person</span>
@@ -90,13 +176,18 @@
 
       }
 
+      <!-- Typing indicator -->
       @if (agentTyping()) {
         <div class="iv-msg iv-msg--nova" aria-label="Agent is thinking">
           <div class="iv-msg__avatar" aria-hidden="true">
-            <span class="material-symbols-outlined">smart_toy</span>
+            <span class="material-symbols-outlined">
+              {{ useAgent() ? 'hub' : 'smart_toy' }}
+            </span>
           </div>
           <div class="iv-msg__body">
-            <p class="iv-msg__sender">Nova</p>
+            <p class="iv-msg__sender">
+              {{ useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite' }}
+            </p>
             <div class="iv-msg__bubble iv-msg__bubble--nova iv-msg__bubble--typing">
               <span class="iv-typing-dot"></span>
               <span class="iv-typing-dot"></span>
@@ -109,65 +200,89 @@
     </div>
   </main>
 
-  <!-- ── FOOTER CONTROLS ─────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════
+       FOOTER — controls differ by mode
+       ══════════════════════════════════════════════════════════════ -->
   @if (!conversationComplete()) {
     <footer class="iv-footer">
-      <div class="iv-controls">
 
-        <!-- Mute / unmute -->
-        @if (interviewMode() === 'voice-text' || interviewMode() === 'sonic') {
+      <!-- ── SONIC mode controls ──────────────────────────────── -->
+      @if (interviewMode() === 'sonic') {
+        <div class="iv-controls">
           <button
             class="iv-ctrl"
-            [class.iv-ctrl--active]="interviewMode() === 'sonic' ? isSonicListening() : isRecording()"
+            [class.iv-ctrl--active]="isSonicListening()"
             type="button"
             (click)="micClicked.emit()"
-            [attr.aria-label]="interviewMode() === 'sonic'
-              ? (isSonicListening() ? 'Mute microphone' : 'Unmute microphone')
-              : (isRecording() ? 'Stop recording' : 'Start recording')"
+            [attr.aria-label]="isSonicListening() ? 'Mute microphone' : 'Unmute microphone'"
           >
             <div class="iv-ctrl__icon">
-              <span class="material-symbols-outlined">
-                {{ (interviewMode() === 'sonic' ? isSonicListening() : isRecording()) ? 'mic' : 'mic_off' }}
-              </span>
+              <span class="material-symbols-outlined">{{ isSonicListening() ? 'mic' : 'mic_off' }}</span>
             </div>
-            <span class="iv-ctrl__label">
-              {{ interviewMode() === 'sonic'
-                ? (isSonicListening() ? 'Mute' : 'Unmute')
-                : (isRecording() ? 'Send' : 'Mute') }}
-            </span>
+            <span class="iv-ctrl__label">{{ isSonicListening() ? 'Mute' : 'Unmute' }}</span>
           </button>
-        }
 
-        <!-- Pause / resume -->
-        <button
-          class="iv-ctrl"
-          [class.iv-ctrl--active]="isPaused()"
-          type="button"
-          (click)="pauseClicked.emit()"
-          [attr.aria-label]="isPaused() ? 'Resume interview' : 'Pause interview'"
-        >
-          <div class="iv-ctrl__icon">
-            <span class="material-symbols-outlined">{{ isPaused() ? 'play_arrow' : 'pause' }}</span>
-          </div>
-          <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
-        </button>
+          <button
+            class="iv-ctrl"
+            [class.iv-ctrl--active]="isPaused()"
+            type="button"
+            (click)="pauseClicked.emit()"
+          >
+            <div class="iv-ctrl__icon">
+              <span class="material-symbols-outlined">{{ isPaused() ? 'play_arrow' : 'pause' }}</span>
+            </div>
+            <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
+          </button>
+        </div>
 
-        <!-- Text input toggle -->
-        <button
-          class="iv-ctrl"
-          type="button"
-          (click)="modeToggled.emit()"
-          aria-label="Toggle text input"
-        >
-          <div class="iv-ctrl__icon">
-            <span class="material-symbols-outlined">keyboard</span>
-          </div>
-          <span class="iv-ctrl__label">Text</span>
-        </button>
+        <div class="iv-text-input-row">
+          <label for="iv-sonic-field" class="visually-hidden">Type a message</label>
+          <input
+            id="iv-sonic-field"
+            class="iv-text-input"
+            type="text"
+            placeholder="Or type here instead…"
+            [value]="currentTextInput()"
+            (input)="onTextChange($event)"
+            (keydown.enter)="sonicTextSubmit.emit()"
+          />
+          <button class="iv-text-send" type="button" (click)="sonicTextSubmit.emit()" [disabled]="!currentTextInput().trim()">
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      }
 
-      </div>
+      <!-- ── VOICE-TEXT mode controls ─────────────────────────── -->
+      @if (interviewMode() === 'voice-text') {
+        <div class="iv-controls">
+          <button
+            class="iv-ctrl"
+            [class.iv-ctrl--active]="isRecording()"
+            type="button"
+            (click)="micClicked.emit()"
+            [attr.aria-label]="isRecording() ? 'Stop and send recording' : 'Start recording'"
+          >
+            <div class="iv-ctrl__icon">
+              <span class="material-symbols-outlined">{{ isRecording() ? 'stop_circle' : 'mic' }}</span>
+            </div>
+            <span class="iv-ctrl__label">{{ isRecording() ? 'Send' : 'Record' }}</span>
+          </button>
 
-      <!-- Text input row — shown in text mode -->
+          <button
+            class="iv-ctrl"
+            [class.iv-ctrl--active]="isPaused()"
+            type="button"
+            (click)="pauseClicked.emit()"
+          >
+            <div class="iv-ctrl__icon">
+              <span class="material-symbols-outlined">{{ isPaused() ? 'play_arrow' : 'pause' }}</span>
+            </div>
+            <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
+          </button>
+        </div>
+      }
+
+      <!-- ── TEXT mode controls — no mic at all ───────────────── -->
       @if (interviewMode() === 'text') {
         <div class="iv-text-input-row">
           <label for="iv-text-field" class="visually-hidden">Your message</label>
@@ -179,7 +294,7 @@
             (input)="onTextChange($event)"
             (keydown)="textKeydown.emit($any($event))"
             [disabled]="agentTyping()"
-            placeholder="Type your answer…"
+            placeholder="Type your answer and press Enter…"
             autocomplete="off"
           />
           <button
@@ -188,32 +303,6 @@
             (click)="textSubmit.emit()"
             [disabled]="agentTyping() || !currentTextInput().trim()"
             aria-label="Send"
-          >
-            <span class="material-symbols-outlined">send</span>
-          </button>
-        </div>
-      }
-
-      <!-- Sonic text fallback -->
-      @if (interviewMode() === 'sonic') {
-        <div class="iv-text-input-row">
-          <label for="iv-sonic-field" class="visually-hidden">Type a message</label>
-          <input
-            id="iv-sonic-field"
-            class="iv-text-input"
-            type="text"
-            placeholder="Or type here instead…"
-            [value]="currentTextInput()"
-            (input)="onTextChange($event)"
-            (keydown.enter)="sonicTextSubmit.emit()"
-            aria-label="Type a message"
-          />
-          <button
-            class="iv-text-send"
-            type="button"
-            (click)="sonicTextSubmit.emit()"
-            [disabled]="!currentTextInput().trim()"
-            aria-label="Send typed message"
           >
             <span class="material-symbols-outlined">send</span>
           </button>

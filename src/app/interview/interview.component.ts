@@ -140,6 +140,16 @@ export class InterviewComponent implements OnDestroy {
     return (filled / 5) * 100;
   });
 
+  // ── Agent session ──────────────────────────────────────────────────────────
+
+  // Stable ID for this interview — passed to the Bedrock Agent so it can
+  // maintain conversation memory on the AWS side across turns.
+  private readonly agentSessionId = crypto.randomUUID();
+
+  // Set to true once the agent endpoint confirms it is available.
+  // Falls back to /api/chat if the agent is not configured.
+  useAgent = signal<boolean>(true);
+
   // ── Private internals ──────────────────────────────────────────────────────
 
   private mediaRecorder: MediaRecorder | null = null;
@@ -240,36 +250,22 @@ export class InterviewComponent implements OnDestroy {
     }
 
     this.agentTyping.set(true);
-
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    if (this.cvText()) {
-      // Agent reads the CV and opens with something specific.
-      // We send a silent trigger message — it never shows in the UI.
-      const opening = await this.sendToAgent('[START]');
-      // Strip the trigger from messages — it was never a real user message.
-      // The agent's response becomes the first thing the user sees.
-      this.messages.update((msgs) => [
-        ...msgs,
-        {
-          role: 'agent',
-          text: opening.replace('[CONVERSATION_COMPLETE]', '').trim(),
-          timestamp: new Date(),
-        },
-      ]);
-    } else {
-      // No CV — use the default opening question.
-      const opening =
-        'What is something you have worked on recently that you are genuinely proud of? It does not have to be a big thing.';
-      this.messages.update((msgs) => [
-        ...msgs,
-        {
-          role: 'agent',
-          text: opening,
-          timestamp: new Date(),
-        },
-      ]);
-    }
+    // Ask the agent to open the conversation.
+    // '[START]' is a silent trigger — it never appears in the UI.
+    // With a CV the agent uses it to open with something specific.
+    // Without a CV the agent opens with its default first question.
+    const opening = await this.sendToAgent('[START]');
+
+    this.messages.update((msgs) => [
+      ...msgs,
+      {
+        role: 'agent',
+        text: opening.replace('[CONVERSATION_COMPLETE]', '').trim(),
+        timestamp: new Date(),
+      },
+    ]);
 
     this.agentTyping.set(false);
 
@@ -510,26 +506,58 @@ export class InterviewComponent implements OnDestroy {
   }
 
   private async sendToAgent(userMessage: string): Promise<string> {
-    const history = this.messages();
+    if (this.useAgent()) {
+      console.log('[Agent] → /api/agent-chat', { sessionId: this.agentSessionId, message: userMessage.slice(0, 60) });
+      try {
+        const response = await fetch(`${environment.apiUrl}/api/agent-chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: this.agentSessionId,
+            message: userMessage,
+            cvText: this.cvText() || undefined,
+          }),
+        });
 
-    // Bedrock requires conversations to start with a user message.
+        if (response.status === 503) {
+          // Agent not configured on this server — fall back silently
+          console.warn('Bedrock Agent not available, falling back to /api/chat');
+          this.useAgent.set(false);
+          return this._sendToDirectModel(userMessage);
+        }
+
+        if (!response.ok) {
+          const err = (await response.json()) as { error?: string };
+          console.error('Agent chat error:', err.error ?? 'Server error');
+          return "I'm having trouble connecting right now. Could you tell me more about that?";
+        }
+
+        const data = (await response.json()) as { text?: string };
+        return data.text ?? '';
+      } catch (error) {
+        console.error('Agent chat error:', error);
+        return "I'm having trouble connecting right now. Could you tell me more about that?";
+      }
+    }
+
+    // ── Direct model fallback ──────────────────────────────────────────────
+    return this._sendToDirectModel(userMessage);
+  }
+
+  private async _sendToDirectModel(userMessage: string): Promise<string> {
+    const history = this.messages();
     const firstUserIndex = history.findIndex((m) => m.role === 'user');
 
     let messagesToSend: { role: string; text: string }[];
 
     if (firstUserIndex === -1) {
-      // No user messages yet — userMessage is the trigger (e.g., '[START]')
       messagesToSend = [{ role: 'user', text: userMessage }];
     } else if (firstUserIndex > 0) {
-      // CV-triggered opening: agent messages exist before the first user message.
-      // Reconstruct the full exchange including the [START] trigger so the agent
-      // has context of its own opening question.
       messagesToSend = [
         { role: 'user', text: '[START]' },
         ...history.map((m) => ({ role: m.role, text: m.text })),
       ];
     } else {
-      // Normal case: history starts with a user message
       messagesToSend = history
         .slice(firstUserIndex)
         .map((msg) => ({ role: msg.role, text: msg.text }));
@@ -555,7 +583,6 @@ export class InterviewComponent implements OnDestroy {
       return data.text ?? '';
     } catch (error) {
       console.error('Chat API error:', error);
-      // Graceful fallback — do not crash the conversation
       return "I'm having trouble connecting right now. Could you tell me more about that?";
     }
   }
@@ -629,6 +656,16 @@ export class InterviewComponent implements OnDestroy {
       this.sonicService.stopSession();
     }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+    // Tell the server the agent session is done so it clears CV injection state
+    if (this.useAgent()) {
+      void fetch(`${environment.apiUrl}/api/agent-chat/end-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: this.agentSessionId }),
+      }).catch(() => { /* non-critical */ });
+    }
+
     this.currentState.set('processing');
 
     try {

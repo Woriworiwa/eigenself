@@ -25,6 +25,7 @@
         [conversationComplete]="conversationComplete()"
         [currentTextInput]="currentTextInput()"
         [isPaused]="sonicPaused()"
+        [useAgent]="useAgent()"
         (endInterview)="transitionToProcessing()"
         (micClicked)="onMicClicked()"
         (pauseClicked)="onPauseClicked()"
@@ -32,7 +33,8 @@
         (textKeydown)="handleTextKeydown($event)"
         (textSubmit)="submitTextAnswer()"
         (sonicTextSubmit)="sendSonicText()"
-        (modeToggled)="interviewMode.set(interviewMode() === 'text' ? 'sonic' : 'text')" />
+        (modeToggled)="interviewMode.set(interviewMode() === 'text' ? 'sonic' : 'text')"
+        (agentToggled)="useAgent.set(!useAgent())" />
     }
 
     @case ('processing') {

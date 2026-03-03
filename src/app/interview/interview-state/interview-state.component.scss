@@ -90,12 +90,26 @@ $iv-slate-800:   #1e293b;
   }
 }
 
+.iv-header__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
 .iv-header__title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #f1f5f9;
   margin: 0;
+}
+
+.iv-header__subtitle {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: $iv-slate-400;
+  margin: 0;
+  letter-spacing: 0.02em;
 }
 
 .iv-header__actions {
@@ -137,24 +151,7 @@ $iv-slate-800:   #1e293b;
   &:focus-visible { outline: 2px solid $iv-primary; outline-offset: 3px; }
 }
 
-// ── Voice status ─────────────────────────────────────────────────────────────
-
-.iv-voice-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem 1rem;
-  border-bottom: 1px solid $iv-border;
-  background: $iv-bg-section;
-  flex-shrink: 0;
-  gap: 0.25rem;
-}
-
-.iv-mic-wrapper {
-  position: relative;
-  margin-bottom: 0.75rem;
-}
+// ── Voice status — layout defined in the mode switch section ─────────────────
 
 .iv-mic-pulse {
   position: absolute;
@@ -163,38 +160,6 @@ $iv-slate-800:   #1e293b;
   background: rgba($iv-primary, 0.20);
   transform: scale(1.5);
   animation: ivPulse 2s ease-in-out infinite;
-}
-
-.iv-mic-core {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  background: $iv-primary;
-  color: $iv-bg-dark;
-  box-shadow: 0 8px 24px rgba($iv-primary, 0.25);
-
-  .material-symbols-outlined { font-size: 1.5rem; }
-}
-
-.iv-voice-status__label {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: $iv-primary;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.iv-voice-status__sublabel {
-  font-size: 0.875rem;
-  color: $iv-slate-400;
-  margin: 0;
-  font-style: italic;
-  text-align: center;
-  max-width: 320px;
 }
 
 // ── Conversation ─────────────────────────────────────────────────────────────
@@ -455,4 +420,150 @@ $iv-slate-800:   #1e293b;
   &:focus-visible { outline: 2px solid $iv-primary; outline-offset: 3px; }
 
   .material-symbols-outlined { font-size: 1.2rem; }
+}
+
+// ── Agent / direct model segmented switch ─────────────────────────────────────
+
+.iv-mode-switch {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0.5rem;
+  padding: 3px;
+  gap: 2px;
+}
+
+.iv-mode-switch__opt {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.35rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  .material-symbols-outlined {
+    font-size: 0.95rem;
+  }
+
+  &:hover:not(.iv-mode-switch__opt--active) {
+    color: rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $iv-primary;
+    outline-offset: 2px;
+  }
+}
+
+.iv-mode-switch__opt--active {
+  background: $iv-primary;
+  color: $iv-bg-dark;
+  cursor: default;
+
+  .material-symbols-outlined {
+    font-variation-settings: 'wght' 700;
+  }
+}
+
+// ── Text mode status bar ──────────────────────────────────────────────────────
+
+.iv-text-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.5rem;
+  border-bottom: 1px solid $iv-border;
+  background: rgba($iv-primary, 0.04);
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.iv-text-status__model {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba($iv-primary, 0.8);
+  font-weight: 500;
+
+  .material-symbols-outlined {
+    font-size: 1rem;
+    color: $iv-primary;
+  }
+}
+
+.iv-text-status__thinking {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iv-text-status__thinking-label {
+  font-size: 0.7rem;
+  color: $iv-slate-400;
+  margin-left: 0.25rem;
+  font-style: italic;
+}
+
+// also update the voice status to use row layout for compactness
+.iv-voice-status {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid $iv-border;
+  background: $iv-bg-section;
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.iv-voice-status__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.iv-mic-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.iv-mic-core {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: $iv-primary;
+  color: $iv-bg-dark;
+  box-shadow: 0 4px 12px rgba($iv-primary, 0.25);
+
+  .material-symbols-outlined { font-size: 1.2rem; }
+}
+
+.iv-voice-status__label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: $iv-primary;
+  margin: 0;
+}
+
+.iv-voice-status__sublabel {
+  font-size: 0.75rem;
+  color: $iv-slate-400;
+  margin: 0;
+  font-style: italic;
 }

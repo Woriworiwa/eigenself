@@ -17,6 +17,7 @@ import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
 import { chatRouter }       from './routes/chat';
+import { agentChatRouter }  from './routes/agent-chat';
 import { cvRouter }         from './routes/cv';
 import { documentRouter }   from './routes/document';
 import { profileRouter }    from './routes/profile';
@@ -56,6 +57,7 @@ app.use((req, res, next) => {
 // ── API routes ────────────────────────────────────────────────────────────────
 
 app.use('/api/chat',               chatRouter);
+app.use('/api/agent-chat',         agentChatRouter);
 app.use('/api',                    cvRouter);          // handles /api/parse-cv and /api/extract-name
 app.use('/api/generate-document',  documentRouter);
 app.use('/api/publish-profile',    profileRouter);
@@ -86,6 +88,6 @@ httpServer.listen(PORT, () => {
   console.log(`Eigenself server running on http://localhost:${PORT}`);
   console.log(`Nova 2 Lite  : ${NOVA_LITE_MODEL_ID}`);
   console.log(`Nova 2 Sonic : ${NOVA_SONIC_MODEL_ID}`);
-  console.log('Routes       : /api/chat, /api/parse-cv, /api/extract-name, /api/generate-document, /api/publish-profile, /api/transcribe');
+  console.log('Routes       : /api/chat, /api/agent-chat, /api/parse-cv, /api/extract-name, /api/generate-document, /api/publish-profile, /api/transcribe');
   console.log('Socket.IO    : sonic:start, sonic:audio, sonic:text, sonic:stop');
 });

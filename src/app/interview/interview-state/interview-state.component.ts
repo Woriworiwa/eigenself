@@ -27,6 +27,7 @@ export class InterviewStateComponent implements AfterViewChecked {
   currentTextInput = input<string>('');
 
   isPaused = input<boolean>(false);
+  useAgent = input<boolean>(true);
 
   endInterview = output<void>();
   micClicked = output<void>();
@@ -36,6 +37,7 @@ export class InterviewStateComponent implements AfterViewChecked {
   textSubmit = output<void>();
   sonicTextSubmit = output<void>();
   modeToggled = output<void>();
+  agentToggled = output<void>();
 
   private conversationBodyEl = viewChild<ElementRef<HTMLDivElement>>('conversationBody');
 

@@ -10,7 +10,8 @@
         [supportsSonic]="supportsSonic()"
         (modeSelected)="selectMode($event)"
         (cvFileChanged)="uploadCV($event)"
-        (cvRemoved)="removeCV()" />
+        (cvRemoved)="removeCV()"
+        (cvPasted)="cvText.set($event)" />
     }
 
     @case ('interview') {

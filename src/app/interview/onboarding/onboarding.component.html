@@ -1,93 +1,193 @@
-<div class="onboarding-shell" role="main" aria-label="Welcome">
-  <div class="onboarding-container">
+<div class="ob-shell" role="main" aria-label="Welcome to Eigenself">
 
-    <!-- Intro paragraphs — fade in one by one -->
-    <div class="onboarding-message" aria-live="polite">
-      @for (para of onboardingParagraphs.slice(0, visibleParagraphs()); track $index) {
-        <p class="onboarding-para" [class.onboarding-para--lead]="$index === 0" [class.onboarding-para--cta]="$index === onboardingParagraphs.length - 1">{{ para }}</p>
-      }
-    </div>
+  <!-- Phase wrapper: opacity-transitions between intro and prepare -->
+  <div class="ob-phase" [class.ob-phase--visible]="phaseVisible()">
 
-    @if (onboardingComplete()) {
+    <!-- ══════════════════════════════════════════
+         PHASE 1 — What this is / what it isn't
+         ══════════════════════════════════════════ -->
+    @if (phase() === 'intro') {
+      <div class="ob-container">
 
-      <!-- CV Upload Zone (optional) -->
-      <div class="cv-upload-zone" aria-label="CV upload (optional)">
+        <div class="ob-wordmark" aria-hidden="true">eigenself</div>
 
-        @if (!cvFileName()) {
-          <label class="cv-upload-label" for="cv-file-input">
-            <span class="material-symbols-outlined cv-upload-icon" aria-hidden="true">description</span>
-            <span class="cv-upload-text">
-              @if (cvUploading()) {
-                Reading your CV…
-              } @else {
-                Got a CV?
-              }
-            </span>
-            <span class="cv-upload-subtext">
-              @if (!cvUploading()) {
-                I'll read it before we start — so I won't ask about things you've already written down.
-              }
-            </span>
-            <span class="cv-upload-formats">PDF or Word · optional</span>
-            <input
-              id="cv-file-input"
-              type="file"
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              (change)="cvFileChanged.emit($event)"
-              [disabled]="cvUploading()"
-              class="cv-file-input-hidden"
-              aria-label="Upload your CV — PDF or Word document, optional"
-            >
-          </label>
-
-          @if (cvError()) {
-            <p class="cv-error" role="alert">{{ cvError() }}</p>
+        <div class="ob-message" aria-live="polite">
+          @for (para of introParagraphs.slice(0, visibleParagraphs()); track $index) {
+            <p class="ob-para" [class.ob-para--lead]="$index === 0">{{ para }}</p>
           }
-        } @else {
-          <!-- CV loaded state -->
-          <div class="cv-loaded">
-            <span class="material-symbols-outlined cv-loaded-icon" aria-hidden="true">check_circle</span>
-            <span class="cv-loaded-name">{{ cvFileName() }}</span>
+        </div>
+
+        @if (introComplete()) {
+          <div class="ob-intro-cta">
+            <p class="ob-cta-hint">Take a breath. Find a quiet moment. When you're ready —</p>
             <button
-              class="cv-remove-btn"
+              class="ob-btn ob-btn--primary"
               type="button"
-              (click)="cvRemoved.emit()"
-              aria-label="Remove CV"
+              (click)="goToPrepare()"
             >
-              <span class="material-symbols-outlined">close</span>
+              I'm ready
+              <span class="material-symbols-outlined ob-btn__icon">arrow_forward</span>
             </button>
           </div>
-          <p class="cv-loaded-note">I'll read this before we start.</p>
         }
 
       </div>
-
-      <!-- Mode selection -->
-      <div class="onboarding-actions">
-        @if (supportsSonic()) {
-          <button
-            class="btn btn--voice"
-            type="button"
-            (click)="modeSelected.emit('sonic')"
-            aria-label="Use voice with Nova 2 Sonic"
-          >
-            <span class="material-symbols-outlined">mic</span>
-            Voice
-            <span class="mode-badge">Sonic</span>
-          </button>
-        }
-        <button
-          class="btn btn--text"
-          type="button"
-          (click)="modeSelected.emit('text')"
-          aria-label="Type your answers"
-        >
-          <span class="material-symbols-outlined">keyboard</span>
-          Type
-        </button>
-      </div>
-
     }
 
-  </div>
-</div>
+    <!-- ══════════════════════════════════════════
+         PHASE 2 — Prepare & choose mode
+         ══════════════════════════════════════════ -->
+    @if (phase() === 'prepare') {
+      <div class="ob-container">
+
+        <div class="ob-wordmark" aria-hidden="true">eigenself</div>
+
+        <!-- ── CV section ──────────────────────────────────── -->
+        <section class="ob-section" aria-label="CV upload (optional)">
+
+          <header class="ob-section__header">
+            <h2 class="ob-section__title">Got a CV?</h2>
+            <p class="ob-section__desc">
+              Paste it in or upload the file — I'll read it before we start,
+              so I won't waste your time on things you've already written down.
+              Entirely optional.
+            </p>
+          </header>
+
+          @if (!cvFileName() && !cvText()) {
+
+            <!-- Two affordances side by side -->
+            <div class="ob-cv-options">
+
+              <button
+                class="ob-cv-opt"
+                [class.ob-cv-opt--active]="cvPasteExpanded()"
+                type="button"
+                (click)="toggleCvPaste()"
+                [attr.aria-expanded]="cvPasteExpanded()"
+                aria-controls="cv-paste-area"
+              >
+                <span class="material-symbols-outlined">content_paste</span>
+                <span class="ob-cv-opt__label">Paste text</span>
+              </button>
+
+              <label
+                class="ob-cv-opt"
+                for="cv-file-input"
+                [class.ob-cv-opt--loading]="cvUploading()"
+              >
+                <span class="material-symbols-outlined">
+                  {{ cvUploading() ? 'hourglass_empty' : 'upload_file' }}
+                </span>
+                <span class="ob-cv-opt__label">
+                  {{ cvUploading() ? 'Reading…' : 'Upload file' }}
+                </span>
+                <input
+                  id="cv-file-input"
+                  type="file"
+                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  (change)="cvFileChanged.emit($event)"
+                  [disabled]="cvUploading()"
+                  class="ob-file-hidden"
+                  aria-label="Upload CV — PDF or Word, optional"
+                />
+              </label>
+
+            </div>
+
+            <!-- Expandable paste area -->
+            @if (cvPasteExpanded()) {
+              <div class="ob-cv-paste" id="cv-paste-area">
+                <textarea
+                  class="ob-cv-textarea"
+                  placeholder="Paste your CV text here…"
+                  [value]="cvPasteValue()"
+                  (input)="onCvPasteInput($event)"
+                  rows="8"
+                  aria-label="CV text"
+                  autofocus
+                ></textarea>
+                <div class="ob-cv-paste-footer">
+                  <span class="ob-cv-paste-count">{{ cvPasteValue().length }} chars</span>
+                  @if (cvPasteValue()) {
+                    <button class="ob-cv-paste-clear" type="button" (click)="clearCvPaste()">
+                      Clear
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (cvError()) {
+              <p class="ob-cv-error" role="alert">{{ cvError() }}</p>
+            }
+
+            <p class="ob-cv-formats">PDF · Word · or plain text &nbsp;·&nbsp; skip this if you prefer</p>
+
+          } @else {
+
+            <!-- Loaded state -->
+            <div class="ob-cv-loaded">
+              <span class="material-symbols-outlined ob-cv-loaded__check">check_circle</span>
+              <span class="ob-cv-loaded__name">{{ cvFileName() || 'CV pasted' }}</span>
+              <button
+                class="ob-cv-loaded__remove"
+                type="button"
+                (click)="cvRemoved.emit(); clearCvPaste()"
+                aria-label="Remove CV"
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <p class="ob-cv-loaded-note">I'll read this before your first question.</p>
+
+          }
+
+        </section>
+
+        <!-- ── Mode selection ───────────────────────────────── -->
+        <section class="ob-section ob-section--modes" aria-label="Choose how to talk">
+
+          <header class="ob-section__header">
+            <h2 class="ob-section__title">How would you like to talk?</h2>
+            <p class="ob-section__desc">
+              Start whichever way feels natural — you can switch between voice and typing at any point during the interview.
+            </p>
+          </header>
+
+          <div class="ob-modes-row">
+
+            @if (supportsSonic()) {
+              <button
+                class="ob-mode-btn ob-mode-btn--voice"
+                type="button"
+                (click)="modeSelected.emit('sonic')"
+                aria-label="Start with voice — Nova 2 Sonic"
+              >
+                <span class="material-symbols-outlined ob-mode-btn__icon">graphic_eq</span>
+                <span class="ob-mode-btn__label">Voice</span>
+                <span class="ob-mode-btn__sub">Nova 2 Sonic · real-time</span>
+              </button>
+            }
+
+            <button
+              class="ob-mode-btn ob-mode-btn--text"
+              type="button"
+              (click)="modeSelected.emit('text')"
+              aria-label="Start by typing"
+            >
+              <span class="material-symbols-outlined ob-mode-btn__icon">keyboard</span>
+              <span class="ob-mode-btn__label">Type</span>
+              <span class="ob-mode-btn__sub">At your own pace</span>
+            </button>
+
+          </div>
+
+        </section>
+
+      </div>
+    }
+
+  </div><!-- /ob-phase -->
+
+</div><!-- /ob-shell -->

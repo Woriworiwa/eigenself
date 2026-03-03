@@ -28,7 +28,8 @@ const PORT = Number(process.env['PORT'] ?? 3000);
 
 const ALLOWED_ORIGINS = [
   'http://localhost:4200',
-  'https://d1k8d68asrg0f1.cloudfront.net',
+  // Production Angular app — served from CloudFront, makes requests to this EC2 server
+  'https://d97lw07dec7fh.cloudfront.net',
 ];
 
 // ── Express ───────────────────────────────────────────────────────────────────

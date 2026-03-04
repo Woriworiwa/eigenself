@@ -252,11 +252,15 @@ export class InterviewComponent implements OnDestroy {
     this.agentTyping.set(true);
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    // Ask the agent to open the conversation.
-    // '[START]' is a silent trigger — it never appears in the UI.
-    // With a CV the agent uses it to open with something specific.
-    // Without a CV the agent opens with its default first question.
-    const opening = await this.sendToAgent('[START]');
+    // Ask the agent to open the conversation with a natural first question.
+    // We send a plain instruction so the agent has clear intent regardless
+    // of whether a CV was provided. cvText is injected in sendToAgent()
+    // on the first turn automatically.
+    const openingPrompt = this.cvText()
+      ? 'Please open the interview. You have the CV — use something specific from it to start, then move to what the CV cannot tell you.'
+      : 'Please open the interview with your first question.';
+
+    const opening = await this.sendToAgent(openingPrompt);
 
     this.messages.update((msgs) => [
       ...msgs,

@@ -1,183 +1,219 @@
-<div class="shell">
+<div class="w-shell">
 
-  <!-- ── Navigation ──────────────────────────────────────────────────────── -->
-  <header class="nav">
-    <div class="nav__brand">
-      <span class="material-symbols-outlined nav__logo-icon">fingerprint</span>
-      <span class="nav__wordmark">Eigenself</span>
+  <!-- ── Navigation ─────────────────────────────────────────────── -->
+  <nav class="w-nav">
+    <span class="w-wordmark">eigenself</span>
+    <div class="w-nav-actions">
+      <a href="#how-it-works" class="w-nav-link">How it works</a>
+      <button class="w-btn w-btn--ghost" type="button">Sign in</button>
     </div>
-    <div class="nav__actions">
-      <button class="nav__link" type="button">How it works</button>
-      <button class="btn btn--login" type="button">Login</button>
-    </div>
-  </header>
+  </nav>
 
   <main>
 
-    <!-- ── Hero ──────────────────────────────────────────────────────────── -->
-    <section class="hero">
-      <div class="hero__content">
+    <!-- ── Hero ────────────────────────────────────────────────────── -->
+    <section class="w-hero">
+      <p class="w-eyebrow">Amazon Nova Hackathon · Voice AI</p>
 
-        <div class="hero__badge">
-          <span class="hero__badge-dot"></span>
-          <span class="hero__badge-label">Powered by Amazon Nova</span>
-        </div>
+      <h1 class="w-headline">
+        A 20-minute voice interview.<br>
+        A document that tells AI<br>
+        <em>who you actually are.</em>
+      </h1>
 
-        <h1 class="hero__headline">
-          The market isn't humanizing you.
-          <span class="hero__headline-accent">We are.</span>
-        </h1>
+      <p class="w-explanation">
+        You speak. An AI interviews you — not about your job titles, but about how
+        you think, what drives you, how you make hard calls. At the end, you get a
+        <strong>structured&nbsp;.md file</strong> — your identity in a format that
+        AI hiring agents can actually read, reason over, and respect.
+        A professional bio and CV come with it.
+      </p>
 
-        <p class="hero__body">
-          Eigenself encodes your unique identity into an AI Protocol. Move beyond
-          static resumes to a dynamic, human-centric data layer that truly
-          represents who you are.
-        </p>
-
-        <div class="hero__ctas">
-          <button class="btn btn--primary" type="button" (click)="startInterview()">
-            <span class="material-symbols-outlined">mic</span>
-            Start Voice Interview
-          </button>
-          <button class="btn btn--ghost" type="button">
-            View Sample Protocol
-          </button>
-        </div>
-
-      </div>
-
-      <div class="hero__visual" aria-hidden="true">
-        <div class="hero__visual-glow"></div>
-        <div class="hero__visual-card">
-          <span class="material-symbols-outlined hero__visual-icon">filter_vintage</span>
-          <div class="hero__visual-bars">
-            <div class="hero__visual-bar" style="width: 66%"></div>
-            <div class="hero__visual-bar" style="width: 50%"></div>
-            <div class="hero__visual-bar" style="width: 75%"></div>
-          </div>
-        </div>
-        <div class="hero__visual-badge hero__visual-badge--tl">
-          <span class="material-symbols-outlined">psychology</span>
-        </div>
-        <div class="hero__visual-badge hero__visual-badge--br">
-          <span class="material-symbols-outlined">database</span>
-        </div>
+      <div class="w-ctas">
+        <button class="w-btn w-btn--primary" type="button" (click)="startInterview()">
+          Start your interview
+        </button>
+        <button class="w-btn w-btn--ghost" type="button" (click)="openSample()">
+          View sample protocol
+        </button>
+        <p class="w-cta-meta">~20 minutes · no account needed · voice or text</p>
       </div>
     </section>
 
-    <!-- ── Three Outputs ─────────────────────────────────────────────────── -->
-    <section class="outputs">
-      <div class="outputs__inner">
+    <!-- ── Why this exists ──────────────────────────────────────────── -->
+    <section class="w-problem" id="how-it-works">
+      <div class="w-problem-inner">
 
-        <div class="outputs__header">
-          <h2 class="outputs__title">Your Digital Essence, Three Ways</h2>
-          <p class="outputs__subtitle">Transform your interview into versatile digital assets.</p>
-        </div>
-
-        <div class="outputs__grid">
-
-          <div class="output-card">
-            <div class="output-card__icon">
-              <span class="material-symbols-outlined">terminal</span>
-            </div>
-            <h3 class="output-card__title">AI Protocol (.md)</h3>
-            <p class="output-card__body">
-              Your core logic, principles, and professional values in a
-              machine-readable format for the agentic era.
-            </p>
-          </div>
-
-          <div class="output-card">
-            <div class="output-card__icon">
-              <span class="material-symbols-outlined">history_edu</span>
-            </div>
-            <h3 class="output-card__title">Professional Bio</h3>
-            <p class="output-card__body">
-              A compelling, human-centric narrative that highlights your
-              expertise and unique vision for the world.
-            </p>
-          </div>
-
-          <div class="output-card">
-            <div class="output-card__icon">
-              <span class="material-symbols-outlined">badge</span>
-            </div>
-            <h3 class="output-card__title">Legacy CV</h3>
-            <p class="output-card__body">
-              A structured, high-impact document of your professional journey,
-              optimized for traditional opportunities.
-            </p>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Technical Proof ───────────────────────────────────────────────── -->
-    <section class="tech">
-      <div class="tech__inner">
-
-        <div class="tech__copy">
-          <h2 class="tech__title">Powered by Amazon Nova</h2>
-          <p class="tech__body">
-            We leverage cutting-edge LLM capabilities for deep identity synthesis.
-            Our protocol goes beyond keywords, capturing the nuances of your
-            decision-making, communication style, and cultural impact.
+        <div class="w-problem-copy">
+          <p class="w-label">Why this exists</p>
+          <h2 class="w-problem-title">
+            Recruiters already use AI to screen candidates.
+            The question is what that AI reads.
+          </h2>
+          <p class="w-problem-body">
+            Right now it reads a CV — a document written for human eyes, optimised for
+            keywords, filtered by ATS scanners. You get reduced to a skills list.
+            The context, the judgment, the way you actually work — gone.
           </p>
-          <ul class="tech__checklist">
-            <li class="tech__check-item">
-              <span class="material-symbols-outlined tech__check-icon">check_circle</span>
-              Secure data encryption
-            </li>
-            <li class="tech__check-item">
-              <span class="material-symbols-outlined tech__check-icon">check_circle</span>
-              Privacy-first architecture
-            </li>
-            <li class="tech__check-item">
-              <span class="material-symbols-outlined tech__check-icon">check_circle</span>
-              Zero-knowledge proof options
-            </li>
-          </ul>
+          <p class="w-problem-body">
+            Eigenself creates a profile written natively for AI. Not keywords —
+            structured reasoning patterns, decision-making context, communication style.
+            The things a good interviewer would surface. Encoded so an AI agent
+            on the other side can actually evaluate fit.
+          </p>
         </div>
 
-        <div class="tech__grid" aria-hidden="true">
-          <div class="tech-tile">
-            <span class="material-symbols-outlined tech-tile__icon">neurology</span>
-            <span class="tech-tile__label">Identity Synthesis</span>
+        <div class="w-flows">
+          <div>
+            <p class="w-flow-label">Old model</p>
+            <div class="w-flow">
+              <div class="w-flow-item">
+                <span class="w-flow-step">You</span>
+                <span class="w-flow-text">Fill in a CV form</span>
+              </div>
+              <div class="w-flow-arrow">↓</div>
+              <div class="w-flow-item">
+                <span class="w-flow-step">ATS</span>
+                <span class="w-flow-text">Scans for keywords</span>
+              </div>
+              <div class="w-flow-arrow">↓</div>
+              <div class="w-flow-item">
+                <span class="w-flow-step">Human</span>
+                <span class="w-flow-text">Skims what's left</span>
+              </div>
+            </div>
           </div>
-          <div class="tech-tile">
-            <span class="material-symbols-outlined tech-tile__icon">shield_person</span>
-            <span class="tech-tile__label">Sovereign Data</span>
-          </div>
-          <div class="tech-tile">
-            <span class="material-symbols-outlined tech-tile__icon">hub</span>
-            <span class="tech-tile__label">AI Interop</span>
-          </div>
-          <div class="tech-tile">
-            <span class="material-symbols-outlined tech-tile__icon">settings_input_component</span>
-            <span class="tech-tile__label">Machine Readable</span>
+
+          <div>
+            <p class="w-flow-label">Eigenself model</p>
+            <div class="w-flow">
+              <div class="w-flow-item w-flow-item--new">
+                <span class="w-flow-step">You</span>
+                <span class="w-flow-text">Have a real conversation</span>
+                <span class="w-flow-badge">voice</span>
+              </div>
+              <div class="w-flow-arrow">↓</div>
+              <div class="w-flow-item w-flow-item--new">
+                <span class="w-flow-step">Nova</span>
+                <span class="w-flow-text">Writes your .md identity protocol</span>
+                <span class="w-flow-badge">AI</span>
+              </div>
+              <div class="w-flow-arrow">↓</div>
+              <div class="w-flow-item w-flow-item--new">
+                <span class="w-flow-step">Agent</span>
+                <span class="w-flow-text">Evaluates fit with real context</span>
+                <span class="w-flow-badge">new</span>
+              </div>
+            </div>
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ── Outputs ──────────────────────────────────────────────────── -->
+    <section class="w-outputs">
+      <div class="w-outputs-inner">
+
+        <div class="w-outputs-header">
+          <p class="w-label">What you get</p>
+          <h2 class="w-outputs-title">One interview. Three documents.</h2>
+          <p class="w-outputs-subtitle">
+            The protocol is the source of truth. The bio and CV are rendered from it —
+            for the contexts that still need them.
+          </p>
+        </div>
+
+        <div class="w-outputs-grid">
+
+          <div class="w-output-card w-output-card--primary">
+            <span class="w-output-num">01</span>
+            <span class="w-output-tag">Primary output</span>
+            <div class="w-output-title">AI Identity Protocol (.md)</div>
+            <p class="w-output-desc">
+              A structured markdown file describing how you think, decide, and communicate.
+              Load it into any AI agent as a system prompt — it will respond as you,
+              evaluate opportunities from your perspective, and represent you accurately
+              to other agents.
+            </p>
+          </div>
+
+          <div class="w-output-card">
+            <span class="w-output-num">02</span>
+            <span class="w-output-tag w-output-tag--secondary">Rendered from protocol</span>
+            <div class="w-output-title">Professional Bio</div>
+            <p class="w-output-desc">
+              A warm, human-readable narrative generated from your protocol.
+              Ready to paste into LinkedIn, a portfolio, or a conference page.
+            </p>
+          </div>
+
+          <div class="w-output-card">
+            <span class="w-output-num">03</span>
+            <span class="w-output-tag w-output-tag--secondary">Rendered from protocol</span>
+            <div class="w-output-title">Structured CV</div>
+            <p class="w-output-desc">
+              A clean, structured CV for systems that still require it.
+              Not the point — but it comes for free, and it's accurate.
+            </p>
+          </div>
+
+        </div>
       </div>
     </section>
 
   </main>
 
-  <!-- ── Footer ────────────────────────────────────────────────────────────── -->
-  <footer class="footer">
-    <div class="footer__inner">
-      <div class="footer__brand">
-        <span class="material-symbols-outlined footer__logo-icon">fingerprint</span>
-        <span class="footer__wordmark">Eigenself</span>
-      </div>
-      <nav class="footer__links" aria-label="Footer navigation">
-        <a class="footer__link" href="#">Privacy Policy</a>
-        <a class="footer__link" href="#">Terms of Service</a>
-        <a class="footer__link" href="#">Contact</a>
+  <!-- ── Footer ──────────────────────────────────────────────────────── -->
+  <footer class="w-footer">
+    <div class="w-footer-inner">
+      <span class="w-wordmark">eigenself</span>
+      <nav class="w-footer-links" aria-label="Footer">
+        <a class="w-footer-link" href="#">Privacy</a>
+        <a class="w-footer-link" href="#">Terms</a>
+        <a class="w-footer-link" href="#">Contact</a>
       </nav>
-      <p class="footer__copy">© 2024 Eigenself AI. All rights reserved.</p>
+      <span class="w-footer-copy">© 2026 Eigenself</span>
     </div>
   </footer>
 
 </div>
+
+<!-- ── Sample Protocol Modal ──────────────────────────────────────── -->
+@if (sampleOpen()) {
+  <div class="sp-overlay" role="dialog" aria-modal="true" aria-label="Sample identity protocol" (click)="onOverlayClick($event)">
+    <div class="sp-sheet">
+
+      <div class="sp-header">
+        <div class="sp-header-left">
+          <div class="sp-dots">
+            <div class="sp-dot"></div>
+            <div class="sp-dot"></div>
+            <div class="sp-dot"></div>
+          </div>
+          <span class="sp-filename">sample-identity-protocol.md</span>
+        </div>
+        <div class="sp-header-actions">
+          <button class="sp-download-btn" type="button" (click)="downloadSample()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download .md
+          </button>
+          <button class="sp-close-btn" type="button" (click)="closeSample()" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <div class="sp-body">
+        <p class="sp-note">
+          This is a real example of what Eigenself produces after a 20-minute interview.
+          Names and details are fictional — the structure and depth are accurate.
+        </p>
+        <pre class="sp-pre">{{ sampleProtocol }}</pre>
+      </div>
+
+    </div>
+  </div>
+}

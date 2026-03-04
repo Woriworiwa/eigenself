@@ -128,6 +128,8 @@ export async function createSonicSession(
   let transcriptBuffer: TranscriptEntry = { role: 'agent', text: '' };
   const fullTranscript: TranscriptEntry[] = [];
   let completeSent = false;
+  let currentContentType = '';
+  let currentContentRole = '';
 
   (async () => {
     try {
@@ -146,40 +148,66 @@ export async function createSonicSession(
         if (!data.event) continue;
         const ev = data.event as Record<string, unknown>;
 
+        // Track the current content block type so we only process
+        // textOutput events from TEXT blocks, not the duplicate text
+        // that Bedrock also sends inside AUDIO content blocks.
+        if (ev['completionStart']) {
+          // reset per-completion state if needed in future
+        }
+
+        if (ev['contentStart']) {
+          const cs = ev['contentStart'] as Record<string, unknown>;
+          currentContentType = (cs['type'] as string) ?? '';
+          currentContentRole = (cs['role'] as string) ?? '';
+        }
+
         // Audio out — stream directly to browser
         if (ev['audioOutput'] && typeof (ev['audioOutput'] as Record<string, unknown>)['content'] === 'string') {
           socket.emit('sonic:audio-out', (ev['audioOutput'] as Record<string, string>)['content']);
         }
 
-        // Text out — accumulate into turns
-        if (ev['textOutput']) {
+        // Emit every TEXT chunk — deduplication happens on the client
+        if (ev['textOutput'] && currentContentType === 'TEXT') {
           const textOut = ev['textOutput'] as { content: string; role: string };
           const role: TranscriptEntry['role'] = textOut.role === 'ASSISTANT' ? 'agent' : 'user';
-          const text = textOut.content;
+          const raw = textOut.content;
 
-          if (transcriptBuffer.role !== role) {
-            flushTranscriptBuffer(socket, transcriptBuffer, fullTranscript);
-            transcriptBuffer = { role, text };
-          } else {
-            transcriptBuffer.text += text;
+          // Detect completion before stripping
+          if (!completeSent && raw.includes('[CONVERSATION_COMPLETE]')) {
+            completeSent = true;
           }
 
+          // Strip control tokens from what the client sees
+          const text = raw.replace(/\[CONVERSATION_COMPLETE\]/g, '').trim();
+          if (!text) continue;
+
+          // Accumulate server-side for the fullTranscript (sent on complete)
+          if (transcriptBuffer.role === role) {
+            transcriptBuffer.text += text;
+          } else {
+            if (transcriptBuffer.text.trim()) {
+              fullTranscript.push({ role: transcriptBuffer.role, text: transcriptBuffer.text.trim() });
+            }
+            transcriptBuffer = { role, text };
+          }
+
+          // Emit once — client accumulates into its live transcript
           socket.emit('sonic:transcript-chunk', { role, text, final: false });
         }
 
-        // Content end — flush buffer
-        if (ev['contentEnd']) {
-          flushTranscriptBuffer(socket, transcriptBuffer, fullTranscript);
-          transcriptBuffer = { role: 'agent', text: '' };
-        }
-
-        // Detect conversation completion (emitted once)
-        if (!completeSent) {
-          const allText = fullTranscript.map(t => t.text).join(' ');
-          if (allText.includes('[CONVERSATION_COMPLETE]')) {
-            completeSent = true;
-            socket.emit('sonic:complete', { transcript: fullTranscript });
+        if (ev['contentEnd'] && currentContentType === 'TEXT') {
+          if (transcriptBuffer.text.trim()) {
+            fullTranscript.push({ role: transcriptBuffer.role, text: transcriptBuffer.text.trim() });
           }
+          transcriptBuffer = { role: 'agent', text: '' };
+
+          if (completeSent && fullTranscript.length > 0) {
+            socket.emit('sonic:complete', { transcript: fullTranscript });
+            completeSent = false;
+          }
+        }
+        if (ev['contentEnd']) {
+          currentContentType = '';
         }
       }
     } catch (error) {
@@ -254,19 +282,5 @@ function sendContentBlock(
   });
   enqueue({
     event: { contentEnd: { promptName, contentName } },
-  });
-}
-
-function flushTranscriptBuffer(
-  socket: Socket,
-  buffer: TranscriptEntry,
-  fullTranscript: TranscriptEntry[],
-): void {
-  if (!buffer.text.trim()) return;
-  fullTranscript.push({ role: buffer.role, text: buffer.text.trim() });
-  socket.emit('sonic:transcript-chunk', {
-    role: buffer.role,
-    text: buffer.text.trim(),
-    final: true,
   });
 }

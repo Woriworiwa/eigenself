@@ -1,8 +1,13 @@
-// ─── App shell ───────────────────────────────────────────────────────────────
+// interview.component.scss
+// The shell is transparent — each child component owns its own background.
+
+:host {
+  display: block;
+}
 
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--paper);
+  background: var(--bg);
 }

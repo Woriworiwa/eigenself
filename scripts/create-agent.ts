@@ -18,6 +18,7 @@ import {
   CreateAgentCommand,
   PrepareAgentCommand,
   CreateAgentAliasCommand,
+  CreateAgentActionGroupCommand,
   GetAgentCommand,
 } from '@aws-sdk/client-bedrock-agent';
 import { AGENT_INSTRUCTIONS } from '../src/server/prompts/agent';
@@ -63,7 +64,19 @@ Then export the ARN it prints and re-run this script:
   console.log('Waiting for agent to initialise...');
   await waitForAgentStatus(client, agentId, 'NOT_PREPARED');
 
-  // Step 3 — prepare (compile) the agent
+  // Step 3 — enable AMAZON.UserInput so the agent can respond conversationally
+  // without requiring a tool/action group invocation. Without this, Bedrock
+  // rejects natural conversation turns with "tools do not support this action".
+  console.log('Enabling UserInput action group...');
+  await client.send(new CreateAgentActionGroupCommand({
+    agentId,
+    agentVersion: 'DRAFT',
+    actionGroupName: 'UserInputAction',
+    parentActionGroupSignature: 'AMAZON.UserInput',
+    actionGroupState: 'ENABLED',
+  }));
+
+  // Step 4 — prepare (compile) the agent
   console.log('Preparing agent...');
   await client.send(new PrepareAgentCommand({ agentId }));
   await waitForAgentStatus(client, agentId, 'PREPARED');

@@ -51,12 +51,18 @@ agentChatRouter.post('/', async (req: Request, res: Response) => {
     return;
   }
 
-  // On the first turn, prepend CV context to the message so the agent
-  // knows the factual layer and can skip those questions.
+  // On the first turn, wrap the message with explicit system-level framing.
+  // Without this the agent treats the opening instruction as a user request
+  // and rejects it ("cannot conduct interviews") due to its guardrails.
+  // We track by sessionId so subsequent turns are sent as plain user messages.
   let fullMessage = message;
-  if (cvText && !cvInjectedSessions.has(sessionId)) {
+  if (!cvInjectedSessions.has(sessionId)) {
     cvInjectedSessions.add(sessionId);
-    fullMessage = `[CV PROVIDED — you have read this, do not ask about career history or skills listed here. Use it to open with something specific, then focus on what the CV cannot tell you.]\n\n${cvText}\n\n---\n\nUser's first message: ${message}`;
+    if (cvText) {
+      fullMessage = `[SYSTEM — interview starting. CV provided below. Read it, then open the interview with a specific observation from it before moving to what it cannot tell you.]\n\n${cvText}\n\n---\n\n${message}`;
+    } else {
+      fullMessage = `[SYSTEM — interview starting. No CV provided. Open the interview with your first question to learn who this person is.]`;
+    }
   }
 
   try {

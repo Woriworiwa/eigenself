@@ -69,16 +69,37 @@ export class SonicService implements OnDestroy {
 
     this.socket.on('sonic:transcript-chunk', (chunk: TranscriptChunk) => {
       this.latestChunk.set(chunk);
-      if (chunk.final) {
-        this.fullTranscript.update(t => [
-          ...t,
-          { role: chunk.role, text: chunk.text },
-        ]);
-      }
+
+      this.fullTranscript.update(transcript => {
+        const last = transcript[transcript.length - 1];
+
+        if (last && last.role === chunk.role) {
+          // Same speaker — check if this chunk is a replay.
+          // Bedrock replays complete block text verbatim, so if the current
+          // accumulated text already contains this chunk, skip it.
+          if (last.text.includes(chunk.text)) {
+            return transcript; // duplicate — discard
+          }
+          return [
+            ...transcript.slice(0, -1),
+            { role: last.role, text: last.text + chunk.text },
+          ];
+        } else {
+          // New speaker — but first check if this is a replay of an older entry.
+          // If any existing entry with this role already contains this text, skip it.
+          const alreadySeen = transcript.some(
+            entry => entry.role === chunk.role && entry.text.includes(chunk.text)
+          );
+          if (alreadySeen) return transcript;
+          return [...transcript, { role: chunk.role, text: chunk.text }];
+        }
+      });
     });
 
-    this.socket.on('sonic:complete', (data: { transcript: SonicTranscriptEntry[] }) => {
-      this.fullTranscript.set(data.transcript);
+    this.socket.on('sonic:complete', (_data: { transcript: SonicTranscriptEntry[] }) => {
+      // The live transcript is already accurate from the chunk accumulation above.
+      // We do NOT replace it here — that caused every message to appear twice.
+      // Just signal completion so the interview component transitions to processing.
       this.conversationComplete.set(true);
       void this.stopListening();
     });

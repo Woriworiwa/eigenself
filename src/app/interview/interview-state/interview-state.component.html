@@ -1,38 +1,22 @@
 <div class="iv-shell" [attr.data-mode]="interviewMode()" role="main" aria-label="Interview in progress">
 
-  <!-- ══════════════════════════════════════════════════════════════
-       HEADER — adapts to mode
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
   <header class="iv-header">
 
-    <!-- Brand / mode identity -->
     <div class="iv-header__brand">
-      <div class="iv-header__icon" aria-hidden="true">
-        <span class="material-symbols-outlined">
-          {{ interviewMode() === 'sonic' ? 'graphic_eq' : (useAgent() ? 'hub' : 'bolt') }}
-        </span>
-      </div>
+      <div class="iv-indicator" aria-hidden="true"></div>
       <div class="iv-header__title-group">
         <h2 class="iv-header__title">
           @if (interviewMode() === 'sonic') { Nova 2 Sonic }
           @else if (useAgent()) { Bedrock Agent }
           @else { Nova 2 Lite }
         </h2>
-        <p class="iv-header__subtitle">
-          @if (interviewMode() === 'sonic') {
-            Real-time voice · Nova 2 Sonic
-          } @else if (useAgent()) {
-            Adaptive interview · Bedrock Agent → Nova 2 Lite
-          } @else {
-            Direct model · Nova 2 Lite
-          }
-        </p>
+        <p class="iv-header__subtitle">interview in progress</p>
       </div>
     </div>
 
     <div class="iv-header__actions">
 
-      <!-- Agent / Direct switch — text modes only -->
       @if (interviewMode() !== 'sonic') {
         <div class="iv-mode-switch" role="group" aria-label="Model mode">
           <button
@@ -40,9 +24,10 @@
             [class.iv-mode-switch__opt--active]="!useAgent()"
             type="button"
             (click)="useAgent() && agentToggled.emit()"
-            title="Direct call to Nova 2 Lite — no agent orchestration"
           >
-            <span class="material-symbols-outlined">bolt</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
             Direct
           </button>
           <button
@@ -50,75 +35,71 @@
             [class.iv-mode-switch__opt--active]="useAgent()"
             type="button"
             (click)="!useAgent() && agentToggled.emit()"
-            title="Bedrock Agent with adaptive interview orchestration"
           >
-            <span class="material-symbols-outlined">hub</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
+              <line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/>
+            </svg>
             Agent
           </button>
         </div>
       }
 
       <button class="iv-btn-end" type="button" (click)="endInterview.emit()">
-        End Interview
+        End interview
       </button>
     </div>
   </header>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       STATUS BAR — only in voice modes (sonic / voice-text)
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- ── Voice status bar ────────────────────────────────────────────── -->
   @if (interviewMode() === 'sonic' || interviewMode() === 'voice-text') {
-    <section class="iv-voice-status"
-             [class.iv-voice-status--speaking]="isSonicSpeaking()"
-             [class.iv-voice-status--listening]="isSonicListening() || isRecording()"
-             aria-live="polite">
+    <section class="iv-voice-status" aria-live="polite">
       <div class="iv-mic-wrapper" aria-hidden="true">
         <div class="iv-mic-pulse"></div>
         <div class="iv-mic-core">
-          <span class="material-symbols-outlined">
-            {{ isSonicSpeaking() ? 'graphic_eq' : 'mic' }}
-          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            @if (isSonicSpeaking()) {
+              <path d="M9 18V5l12-2v13M9 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm12-2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/>
+            } @else {
+              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+              <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+            }
+          </svg>
         </div>
       </div>
       <div class="iv-voice-status__text">
-        <h3 class="iv-voice-status__label">
+        <p class="iv-voice-status__label">
           @if (isSonicSpeaking()) { Speaking… }
           @else if (isSonicListening() || isRecording()) { Listening… }
           @else if (agentTyping()) { Thinking… }
           @else { Ready }
-        </h3>
+        </p>
         <p class="iv-voice-status__sublabel">
-          @if (voiceTranscript()) {
-            "{{ voiceTranscript() }}"
-          } @else if (isSonicSpeaking()) {
-            Nova is responding
-          } @else if (isSonicListening() || isRecording()) {
-            Processing your voice
-          } @else if (agentTyping()) {
-            Composing next question
-          } @else {
-            Your turn to speak
-          }
+          @if (voiceTranscript()) { "{{ voiceTranscript() }}" }
+          @else if (isSonicSpeaking()) { Nova is responding }
+          @else if (isSonicListening() || isRecording()) { Processing your voice }
+          @else if (agentTyping()) { Composing next question }
+          @else { Your turn to speak }
         </p>
       </div>
     </section>
   }
 
-  <!-- ══════════════════════════════════════════════════════════════
-       STATUS BAR — text mode only (no mic, shows model info)
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- ── Text mode status bar ────────────────────────────────────────── -->
   @if (interviewMode() === 'text') {
     <section class="iv-text-status" aria-live="polite">
       <div class="iv-text-status__model">
-        <span class="material-symbols-outlined">
-          {{ useAgent() ? 'hub' : 'bolt' }}
-        </span>
-        <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           @if (useAgent()) {
-            Bedrock Agent is conducting this interview — questions adapt to your answers
+            <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
+            <line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/>
           } @else {
-            Direct model — Nova 2 Lite with a fixed system prompt
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           }
+        </svg>
+        <span>
+          @if (useAgent()) { Bedrock Agent · questions adapt to your answers }
+          @else { Nova 2 Lite · direct model }
         </span>
       </div>
       @if (agentTyping()) {
@@ -134,65 +115,39 @@
     </section>
   }
 
-  <!-- ══════════════════════════════════════════════════════════════
-       CONVERSATION
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- ── Conversation ─────────────────────────────────────────────────── -->
   <main class="iv-conversation" #conversationBody>
     <div class="iv-conversation__inner">
 
       @for (message of messages(); track $index) {
 
         @if (message.role === 'agent') {
-          <div class="iv-msg iv-msg--nova">
-            <div class="iv-msg__avatar" aria-hidden="true">
-              <span class="material-symbols-outlined">
-                {{ interviewMode() === 'sonic' ? 'graphic_eq' : (useAgent() ? 'hub' : 'smart_toy') }}
-              </span>
-            </div>
-            <div class="iv-msg__body">
-              <p class="iv-msg__sender">
-                {{ interviewMode() === 'sonic' ? 'Nova 2 Sonic' : (useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite') }}
-              </p>
-              <div class="iv-msg__bubble iv-msg__bubble--nova">
-                <p>{{ message.text }}</p>
-              </div>
-            </div>
+          <div class="iv-msg--nova">
+            <p class="iv-msg__sender">
+              {{ interviewMode() === 'sonic' ? 'Nova 2 Sonic' : (useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite') }}
+            </p>
+            <p class="iv-msg__text--nova">{{ message.text }}</p>
           </div>
         }
 
         @if (message.role === 'user') {
-          <div class="iv-msg iv-msg--user">
-            <div class="iv-msg__avatar iv-msg__avatar--user" aria-hidden="true">
-              <span class="material-symbols-outlined">person</span>
-            </div>
-            <div class="iv-msg__body iv-msg__body--user">
-              <p class="iv-msg__sender iv-msg__sender--user">You</p>
-              <div class="iv-msg__bubble iv-msg__bubble--user">
-                <p>{{ message.text }}</p>
-              </div>
-            </div>
+          <div class="iv-msg--user">
+            <p class="iv-msg__sender">You</p>
+            <p class="iv-msg__text--user">{{ message.text }}</p>
           </div>
         }
 
       }
 
-      <!-- Typing indicator -->
       @if (agentTyping()) {
-        <div class="iv-msg iv-msg--nova" aria-label="Agent is thinking">
-          <div class="iv-msg__avatar" aria-hidden="true">
-            <span class="material-symbols-outlined">
-              {{ useAgent() ? 'hub' : 'smart_toy' }}
-            </span>
-          </div>
-          <div class="iv-msg__body">
-            <p class="iv-msg__sender">
-              {{ useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite' }}
-            </p>
-            <div class="iv-msg__bubble iv-msg__bubble--nova iv-msg__bubble--typing">
-              <span class="iv-typing-dot"></span>
-              <span class="iv-typing-dot"></span>
-              <span class="iv-typing-dot"></span>
-            </div>
+        <div class="iv-msg--nova" aria-label="Agent is thinking">
+          <p class="iv-msg__sender">
+            {{ useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite' }}
+          </p>
+          <div class="iv-typing-indicator">
+            <span class="iv-typing-dot"></span>
+            <span class="iv-typing-dot"></span>
+            <span class="iv-typing-dot"></span>
           </div>
         </div>
       }
@@ -200,13 +155,11 @@
     </div>
   </main>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       FOOTER — controls differ by mode
-       ══════════════════════════════════════════════════════════════ -->
+  <!-- ── Footer controls ──────────────────────────────────────────────── -->
   @if (!conversationComplete()) {
     <footer class="iv-footer">
 
-      <!-- ── SONIC mode controls ──────────────────────────────── -->
+      <!-- Sonic mode -->
       @if (interviewMode() === 'sonic') {
         <div class="iv-controls">
           <button
@@ -214,10 +167,19 @@
             [class.iv-ctrl--active]="isSonicListening()"
             type="button"
             (click)="micClicked.emit()"
-            [attr.aria-label]="isSonicListening() ? 'Mute microphone' : 'Unmute microphone'"
+            [attr.aria-label]="isSonicListening() ? 'Mute' : 'Unmute'"
           >
             <div class="iv-ctrl__icon">
-              <span class="material-symbols-outlined">{{ isSonicListening() ? 'mic' : 'mic_off' }}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                @if (isSonicListening()) {
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                  <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+                } @else {
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                  <path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/>
+                  <path d="M17 16.95A7 7 0 015 12v-2m14 0v2c0 .9-.16 1.76-.45 2.55M12 19v4M8 23h8"/>
+                }
+              </svg>
             </div>
             <span class="iv-ctrl__label">{{ isSonicListening() ? 'Mute' : 'Unmute' }}</span>
           </button>
@@ -229,7 +191,13 @@
             (click)="pauseClicked.emit()"
           >
             <div class="iv-ctrl__icon">
-              <span class="material-symbols-outlined">{{ isPaused() ? 'play_arrow' : 'pause' }}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                @if (isPaused()) {
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                } @else {
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                }
+              </svg>
             </div>
             <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
           </button>
@@ -247,12 +215,14 @@
             (keydown.enter)="sonicTextSubmit.emit()"
           />
           <button class="iv-text-send" type="button" (click)="sonicTextSubmit.emit()" [disabled]="!currentTextInput().trim()">
-            <span class="material-symbols-outlined">send</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
           </button>
         </div>
       }
 
-      <!-- ── VOICE-TEXT mode controls ─────────────────────────── -->
+      <!-- Voice-text mode -->
       @if (interviewMode() === 'voice-text') {
         <div class="iv-controls">
           <button
@@ -260,29 +230,23 @@
             [class.iv-ctrl--active]="isRecording()"
             type="button"
             (click)="micClicked.emit()"
-            [attr.aria-label]="isRecording() ? 'Stop and send recording' : 'Start recording'"
           >
             <div class="iv-ctrl__icon">
-              <span class="material-symbols-outlined">{{ isRecording() ? 'stop_circle' : 'mic' }}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                @if (isRecording()) {
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                } @else {
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                  <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+                }
+              </svg>
             </div>
             <span class="iv-ctrl__label">{{ isRecording() ? 'Send' : 'Record' }}</span>
-          </button>
-
-          <button
-            class="iv-ctrl"
-            [class.iv-ctrl--active]="isPaused()"
-            type="button"
-            (click)="pauseClicked.emit()"
-          >
-            <div class="iv-ctrl__icon">
-              <span class="material-symbols-outlined">{{ isPaused() ? 'play_arrow' : 'pause' }}</span>
-            </div>
-            <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
           </button>
         </div>
       }
 
-      <!-- ── TEXT mode controls — no mic at all ───────────────── -->
+      <!-- Text mode -->
       @if (interviewMode() === 'text') {
         <div class="iv-text-input-row">
           <label for="iv-text-field" class="visually-hidden">Your message</label>
@@ -294,7 +258,7 @@
             (input)="onTextChange($event)"
             (keydown)="textKeydown.emit($any($event))"
             [disabled]="agentTyping()"
-            placeholder="Type your answer and press Enter…"
+            placeholder="Write your answer…"
             autocomplete="off"
           />
           <button
@@ -304,7 +268,9 @@
             [disabled]="agentTyping() || !currentTextInput().trim()"
             aria-label="Send"
           >
-            <span class="material-symbols-outlined">send</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
           </button>
         </div>
       }

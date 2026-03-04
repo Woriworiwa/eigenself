@@ -1,87 +1,50 @@
 <div class="ob-shell" role="main" aria-label="Welcome to Eigenself">
 
-  <!-- Phase wrapper: opacity-transitions between intro and prepare -->
-  <div class="ob-phase" [class.ob-phase--visible]="phaseVisible()">
+  <!-- ── Conversation thread ──────────────────────────────────────── -->
+  <div class="ob-conversation" #conversationEl>
+    <div class="ob-conversation__inner">
 
-    <!-- ══════════════════════════════════════════
-         PHASE 1 — What this is / what it isn't
-         ══════════════════════════════════════════ -->
-    @if (phase() === 'intro') {
-      <div class="ob-container">
+      @for (msg of messages(); track $index) {
 
-        <div class="ob-wordmark" aria-hidden="true">eigenself</div>
-
-        <div class="ob-message" aria-live="polite">
-          @for (para of introParagraphs.slice(0, visibleParagraphs()); track $index) {
-            <p class="ob-para" [class.ob-para--lead]="$index === 0">{{ para }}</p>
-          }
-        </div>
-
-        @if (introComplete()) {
-          <div class="ob-intro-cta">
-            <p class="ob-cta-hint">Take a breath. Find a quiet moment. When you're ready —</p>
-            <button
-              class="ob-btn ob-btn--primary"
-              type="button"
-              (click)="goToPrepare()"
-            >
-              I'm ready
-              <span class="material-symbols-outlined ob-btn__icon">arrow_forward</span>
-            </button>
+        @if (msg.role === 'agent') {
+          <div class="ob-msg ob-msg--agent">
+            <div class="ob-msg__mark" aria-hidden="true">e</div>
+            <div class="ob-msg__body">
+              @if (msg.isTyping) {
+                <div class="ob-typing" aria-label="Thinking">
+                  <span class="ob-dot"></span>
+                  <span class="ob-dot"></span>
+                  <span class="ob-dot"></span>
+                </div>
+              } @else {
+                <p class="ob-msg__text">{{ msg.text }}</p>
+              }
+            </div>
           </div>
         }
 
-      </div>
-    }
+        @if (msg.role === 'user') {
+          <div class="ob-msg ob-msg--user">
+            <p class="ob-msg__text">{{ msg.text }}</p>
+          </div>
+        }
 
-    <!-- ══════════════════════════════════════════
-         PHASE 2 — Prepare & choose mode
-         ══════════════════════════════════════════ -->
-    @if (phase() === 'prepare') {
-      <div class="ob-container">
+      }
 
-        <div class="ob-wordmark" aria-hidden="true">eigenself</div>
+      <!-- ── Inline CV affordance — appears after agent asks ─────── -->
+      @if (step() === 'cv-decision' && !agentTyping()) {
+        <div class="ob-inline ob-inline--cv">
 
-        <!-- ── CV section ──────────────────────────────────── -->
-        <section class="ob-section" aria-label="CV upload (optional)">
+          @if (!cvFileName() && !cvPasteValue()) {
 
-          <header class="ob-section__header">
-            <h2 class="ob-section__title">Got a CV?</h2>
-            <p class="ob-section__desc">
-              Paste it in or upload the file — I'll read it before we start,
-              so I won't waste your time on things you've already written down.
-              Entirely optional.
-            </p>
-          </header>
+            <div class="ob-cv-row">
 
-          @if (!cvFileName() && !cvText()) {
-
-            <!-- Two affordances side by side -->
-            <div class="ob-cv-options">
-
-              <button
-                class="ob-cv-opt"
-                [class.ob-cv-opt--active]="cvPasteExpanded()"
-                type="button"
-                (click)="toggleCvPaste()"
-                [attr.aria-expanded]="cvPasteExpanded()"
-                aria-controls="cv-paste-area"
-              >
-                <span class="material-symbols-outlined">content_paste</span>
-                <span class="ob-cv-opt__label">Paste text</span>
-              </button>
-
-              <label
-                class="ob-cv-opt"
-                for="cv-file-input"
-                [class.ob-cv-opt--loading]="cvUploading()"
-              >
-                <span class="material-symbols-outlined">
-                  {{ cvUploading() ? 'hourglass_empty' : 'upload_file' }}
-                </span>
-                <span class="ob-cv-opt__label">
-                  {{ cvUploading() ? 'Reading…' : 'Upload file' }}
-                </span>
+              <!-- Upload -->
+              <label class="ob-cv-chip" for="cv-file-input" [class.ob-cv-chip--loading]="cvUploading()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+                </svg>
+                {{ cvUploading() ? 'Reading…' : 'Upload CV' }}
                 <input
                   id="cv-file-input"
                   type="file"
@@ -89,105 +52,149 @@
                   (change)="cvFileChanged.emit($event)"
                   [disabled]="cvUploading()"
                   class="ob-file-hidden"
-                  aria-label="Upload CV — PDF or Word, optional"
                 />
               </label>
 
-            </div>
+              <!-- Paste toggle -->
+              <button
+                class="ob-cv-chip"
+                [class.ob-cv-chip--active]="cvPasteExpanded()"
+                type="button"
+                (click)="toggleCvPaste()"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Paste text
+              </button>
 
-            <!-- Expandable paste area -->
-            @if (cvPasteExpanded()) {
-              <div class="ob-cv-paste" id="cv-paste-area">
-                <textarea
-                  class="ob-cv-textarea"
-                  placeholder="Paste your CV text here…"
-                  [value]="cvPasteValue()"
-                  (input)="onCvPasteInput($event)"
-                  rows="8"
-                  aria-label="CV text"
-                  autofocus
-                ></textarea>
-                <div class="ob-cv-paste-footer">
-                  <span class="ob-cv-paste-count">{{ cvPasteValue().length }} chars</span>
-                  @if (cvPasteValue()) {
-                    <button class="ob-cv-paste-clear" type="button" (click)="clearCvPaste()">
-                      Clear
-                    </button>
-                  }
-                </div>
-              </div>
-            }
+              <!-- Skip -->
+              <button class="ob-cv-chip ob-cv-chip--skip" type="button" (click)="skipCv()">
+                Skip for now
+              </button>
+
+            </div>
 
             @if (cvError()) {
               <p class="ob-cv-error" role="alert">{{ cvError() }}</p>
             }
 
-            <p class="ob-cv-formats">PDF · Word · or plain text &nbsp;·&nbsp; skip this if you prefer</p>
+            <!-- Paste area -->
+            @if (cvPasteExpanded()) {
+              <div class="ob-paste-area">
+                <textarea
+                  class="ob-paste-textarea"
+                  placeholder="Paste your CV here…"
+                  [value]="cvPasteValue()"
+                  (input)="onCvPasteInput($event)"
+                  rows="7"
+                  autofocus
+                ></textarea>
+                <div class="ob-paste-footer">
+                  <span class="ob-paste-count">{{ cvPasteValue().length }} chars</span>
+                  <div class="ob-paste-actions">
+                    @if (cvPasteValue()) {
+                      <button class="ob-paste-btn ob-paste-btn--clear" type="button" (click)="clearCvPaste()">Clear</button>
+                      <button class="ob-paste-btn ob-paste-btn--confirm" type="button" (click)="confirmCvPaste()">Done →</button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
 
-          } @else {
+          } @else if (cvFileName()) {
 
-            <!-- Loaded state -->
+            <!-- File uploaded — confirm or remove -->
             <div class="ob-cv-loaded">
-              <span class="material-symbols-outlined ob-cv-loaded__check">check_circle</span>
-              <span class="ob-cv-loaded__name">{{ cvFileName() || 'CV pasted' }}</span>
-              <button
-                class="ob-cv-loaded__remove"
-                type="button"
-                (click)="cvRemoved.emit(); clearCvPaste()"
-                aria-label="Remove CV"
-              >
-                <span class="material-symbols-outlined">close</span>
-              </button>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span class="ob-cv-loaded__name">{{ cvFileName() }}</span>
+              <button class="ob-cv-loaded__remove" type="button" (click)="removeCv()" aria-label="Remove">✕</button>
             </div>
-            <p class="ob-cv-loaded-note">I'll read this before your first question.</p>
+            <div class="ob-cv-loaded-actions">
+              <button class="ob-cv-chip ob-cv-chip--confirm" type="button" (click)="confirmCvFile()">
+                Use this CV →
+              </button>
+              <button class="ob-cv-chip ob-cv-chip--skip" type="button" (click)="skipCv()">Skip</button>
+            </div>
 
           }
 
-        </section>
+        </div>
+      }
 
-        <!-- ── Mode selection ───────────────────────────────── -->
-        <section class="ob-section ob-section--modes" aria-label="Choose how to talk">
+      <!-- ── Inline mode choice — appears after agent asks ────────── -->
+      @if (step() === 'mode-decision' && !agentTyping()) {
+        <div class="ob-inline ob-inline--mode">
 
-          <header class="ob-section__header">
-            <h2 class="ob-section__title">How would you like to talk?</h2>
-            <p class="ob-section__desc">
-              Start whichever way feels natural — you can switch between voice and typing at any point during the interview.
-            </p>
-          </header>
-
-          <div class="ob-modes-row">
-
-            @if (supportsSonic()) {
-              <button
-                class="ob-mode-btn ob-mode-btn--voice"
-                type="button"
-                (click)="modeSelected.emit('sonic')"
-                aria-label="Start with voice — Nova 2 Sonic"
-              >
-                <span class="material-symbols-outlined ob-mode-btn__icon">graphic_eq</span>
-                <span class="ob-mode-btn__label">Voice</span>
-                <span class="ob-mode-btn__sub">Nova 2 Sonic · real-time</span>
-              </button>
-            }
-
+          @if (supportsSonic()) {
             <button
-              class="ob-mode-btn ob-mode-btn--text"
+              class="ob-mode-reply ob-mode-reply--voice"
               type="button"
-              (click)="modeSelected.emit('text')"
-              aria-label="Start by typing"
+              (click)="selectMode('sonic')"
             >
-              <span class="material-symbols-outlined ob-mode-btn__icon">keyboard</span>
-              <span class="ob-mode-btn__label">Type</span>
-              <span class="ob-mode-btn__sub">At your own pace</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+              </svg>
+              I'll speak
+              <span class="ob-mode-reply__sub">Nova 2 Sonic · real-time voice</span>
             </button>
+          }
 
-          </div>
+          <button
+            class="ob-mode-reply ob-mode-reply--text"
+            type="button"
+            (click)="selectMode('text')"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <polyline points="4 7 4 4 20 4 20 7"/>
+              <line x1="9" y1="20" x2="15" y2="20"/>
+              <line x1="12" y1="4" x2="12" y2="20"/>
+            </svg>
+            I'll type
+            <span class="ob-mode-reply__sub">At my own pace</span>
+          </button>
 
-        </section>
+        </div>
+      }
 
+    </div>
+  </div>
+
+  <!-- ── Input bar — visible until mode is chosen ─────────────────── -->
+  @if (step() !== 'mode-decision' && step() !== 'cv-decision') {
+    <div class="ob-input-bar">
+      <div class="ob-input-row">
+        <label for="ob-input" class="visually-hidden">Your reply</label>
+        <input
+          id="ob-input"
+          class="ob-input"
+          type="text"
+          [value]="inputValue()"
+          (input)="onInputChange($event)"
+          (keydown)="onKeydown($event)"
+          [disabled]="agentTyping()"
+          placeholder="Write here…"
+          autocomplete="off"
+        />
+        <button
+          class="ob-send"
+          type="button"
+          (click)="submitInput()"
+          [disabled]="agentTyping() || !inputValue().trim()"
+          aria-label="Send"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
       </div>
-    }
+      <p class="ob-input-hint">Press Enter to send</p>
+    </div>
+  }
 
-  </div><!-- /ob-phase -->
-
-</div><!-- /ob-shell -->
+</div>

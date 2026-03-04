@@ -1,6 +1,5 @@
 <div class="processing-shell" role="main" aria-label="Building your identity document">
 
-  <!-- Dots layer — always rendered, floats behind everything -->
   @if (!showNamePrompt()) {
     <div class="dots-field" aria-hidden="true" role="presentation">
       @for (dot of dots(); track $index) {
@@ -17,11 +16,7 @@
     </div>
 
     <div class="processing-inner">
-      @if (messageIndex() % 2 === 0) {
-        <p class="processing-message" aria-live="polite">{{ displayMessage() }}</p>
-      } @else {
-        <p class="processing-message" aria-live="polite">{{ displayMessage() }}</p>
-      }
+      <p class="processing-message" aria-live="polite">{{ displayMessage() }}</p>
     </div>
   }
 
@@ -48,7 +43,10 @@
           (click)="confirmName()"
           aria-label="Continue"
         >
-          <span class="material-symbols-outlined">arrow_forward</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
         </button>
       </div>
     </div>

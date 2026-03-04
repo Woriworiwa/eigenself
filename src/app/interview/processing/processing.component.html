@@ -1,7 +1,31 @@
 <div class="processing-shell" role="main" aria-label="Building your identity document">
 
+  <!-- Dots layer — always rendered, floats behind everything -->
+  @if (!showNamePrompt()) {
+    <div class="dots-field" aria-hidden="true" role="presentation">
+      @for (dot of dots(); track $index) {
+        <div
+          class="processing-dot"
+          [ngStyle]="{
+            width:   dot.size + 'px',
+            height:  dot.size + 'px',
+            opacity: dot.opacity,
+            transform: 'translate(' + dot.x + 'px, ' + dot.y + 'px)'
+          }"
+        ></div>
+      }
+    </div>
+
+    <div class="processing-inner">
+      @if (messageIndex() % 2 === 0) {
+        <p class="processing-message" aria-live="polite">{{ displayMessage() }}</p>
+      } @else {
+        <p class="processing-message" aria-live="polite">{{ displayMessage() }}</p>
+      }
+    </div>
+  }
+
   @if (showNamePrompt()) {
-    <!-- Name prompt — shown when name could not be extracted from CV -->
     <div class="name-prompt-card">
       <p class="name-prompt-label">One last thing —</p>
       <h2 class="name-prompt-heading">What is your name?</h2>
@@ -27,19 +51,6 @@
           <span class="material-symbols-outlined">arrow_forward</span>
         </button>
       </div>
-    </div>
-
-  } @else {
-    <!-- Processing view -->
-    <div class="processing-inner">
-      <div class="dots-field" aria-hidden="true" role="presentation">
-        <div class="processing-dot"></div>
-        <div class="processing-dot"></div>
-        <div class="processing-dot"></div>
-        <div class="processing-dot"></div>
-        <div class="processing-dot"></div>
-      </div>
-      <p class="processing-message" aria-live="polite">{{ processingStatus() }}</p>
     </div>
   }
 

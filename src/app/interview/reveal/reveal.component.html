@@ -1,17 +1,20 @@
 <div class="reveal-shell" role="main" aria-label="Your identity document">
   <div class="reveal-container">
 
-    <!-- Header -->
+    <!-- ── Header ──────────────────────────────────────────────────────── -->
     <header class="reveal-header">
       <div class="reveal-badge">
         <span class="reveal-badge-dot" aria-hidden="true"></span>
         Protocol generated
       </div>
       <h1 class="reveal-title">Your AI identity document is ready.</h1>
-      <p class="reveal-subtitle">Drop it into any AI agent. It will respond as you.</p>
+      <p class="reveal-subtitle">
+        This is not a summary of your CV. It is a protocol — a precise description of how you think,
+        communicate, and make decisions. Any AI that reads it will respond as you.
+      </p>
     </header>
 
-    <!-- Document panel -->
+    <!-- ── Document panel ──────────────────────────────────────────────── -->
     <div class="reveal-document-panel" aria-label="Identity document">
       <div class="document-header" aria-hidden="true">
         <span class="material-symbols-outlined">terminal</span>
@@ -22,134 +25,215 @@
       </div>
     </div>
 
-    <!-- Primary actions -->
-    <div class="reveal-actions">
-      <button
-        class="btn btn--gold"
-        type="button"
-        (click)="copyDocumentClicked.emit()"
-        aria-label="Copy identity document to clipboard"
-      >
+    <!-- Copy / download strip — always visible, no card needed -->
+    <div class="reveal-strip">
+      <button class="strip-btn strip-btn--gold" type="button" (click)="copyDocumentClicked.emit()">
         <span class="material-symbols-outlined">content_copy</span>
         Copy document
       </button>
-      <button
-        class="btn btn--ghost"
-        type="button"
-        (click)="downloadDocumentClicked.emit()"
-        aria-label="Download as markdown file"
-      >
+      <button class="strip-btn strip-btn--ghost" type="button" (click)="downloadDocumentClicked.emit()">
         <span class="material-symbols-outlined">download</span>
         Download .md
       </button>
+      @if (copyConfirmation()) {
+        <span class="strip-confirmation" role="status" aria-live="polite">
+          <span class="material-symbols-outlined">check</span>
+          {{ copyConfirmation() }}
+        </span>
+      }
     </div>
 
-    @if (copyConfirmation()) {
-      <p class="copy-confirmation" role="status" aria-live="polite">
-        <span class="material-symbols-outlined" aria-hidden="true">check</span>
-        {{ copyConfirmation() }}
-      </p>
-    }
+    <!-- ── "What can you do with this?" ────────────────────────────────── -->
+    <section class="uses-section" aria-label="What you can do with your identity document">
 
-    <!-- Profile publishing section -->
-    <div class="profile-publish-section">
+      <h2 class="uses-heading">What can you do with this?</h2>
 
-      <div class="profile-publish-divider" aria-hidden="true"></div>
+      <div class="uses-grid">
 
-      <div class="profile-publish-header">
-        <h2 class="profile-publish-title">Want a public profile page?</h2>
-        <p class="profile-publish-desc">
-          We'll generate a designed web page from your identity document and host it for you.
-          You get a private link — not indexed by search engines, only accessible to people you share it with.
-        </p>
-      </div>
-
-      @if (!profileUrl()) {
-        <button
-          class="btn btn--publish"
-          type="button"
-          (click)="publishProfileClicked.emit()"
-          [disabled]="profilePublishing()"
-          aria-label="Publish your profile page"
-        >
-          @if (profilePublishing()) {
-            <span class="material-symbols-outlined btn-icon--spin">progress_activity</span>
-            Building your page…
-          } @else {
-            <span class="material-symbols-outlined">rocket_launch</span>
-            Publish profile page
-          }
-        </button>
-
-        @if (profilePublishing()) {
-          <p class="profile-publish-status" aria-live="polite">
-            Generating your page and uploading it — this takes about 20 seconds.
-          </p>
-        }
-
-        @if (profilePublishError()) {
-          <p class="profile-publish-error" role="alert">{{ profilePublishError() }}</p>
-        }
-
-      } @else {
-        <!-- Published — show the URL -->
-        <div class="profile-url-card">
-
-          <div class="profile-url-live-badge" aria-label="Profile is live">
-            <span class="live-dot" aria-hidden="true"></span>
-            Live
-          </div>
-
-          <a
-            class="profile-url-link"
-            [href]="profileUrl()"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open your profile page"
-          >
-            {{ profileUrl() }}
-          </a>
-
-          <div class="profile-url-actions">
-            <button
-              class="btn btn--ghost btn--sm"
-              type="button"
-              (click)="copyProfileUrlClicked.emit()"
-              aria-label="Copy profile URL"
-            >
-              @if (profileUrlCopied()) {
-                <span class="material-symbols-outlined">check</span>
-                Copied
-              } @else {
-                <span class="material-symbols-outlined">link</span>
-                Copy link
-              }
-            </button>
-            <a
-              class="btn btn--ghost btn--sm"
-              [href]="profileUrl()"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span class="material-symbols-outlined">open_in_new</span>
-              Open
-            </a>
-          </div>
-
-          <button
-            class="profile-republish-btn"
-            type="button"
-            (click)="publishProfileClicked.emit()"
-            [disabled]="profilePublishing()"
-            aria-label="Regenerate profile page"
-          >
-            @if (profilePublishing()) { Updating… } @else { Regenerate page }
+        <!-- Card 1 — Share -->
+        <div class="use-card" [class.use-card--expanded]="expandedCard() === 'share'">
+          <button class="use-card__trigger" type="button" (click)="toggleCard('share')">
+            <span class="use-card__icon material-symbols-outlined">public</span>
+            <div class="use-card__text">
+              <span class="use-card__title">Share a profile</span>
+              <span class="use-card__desc">Get a public page anyone can view</span>
+            </div>
+            <span class="use-card__chevron material-symbols-outlined">
+              {{ expandedCard() === 'share' ? 'expand_less' : 'expand_more' }}
+            </span>
           </button>
 
-        </div>
-      }
+          @if (expandedCard() === 'share') {
+            <div class="use-card__body">
+              <p class="use-card__body-text">
+                We'll generate a designed web page from your document and host it for you.
+                You get a private link — not indexed, only accessible to people you share it with.
+              </p>
 
-    </div>
+              @if (!profileUrl()) {
+                <button
+                  class="use-action-btn use-action-btn--gold"
+                  type="button"
+                  (click)="publishProfileClicked.emit()"
+                  [disabled]="profilePublishing()"
+                >
+                  @if (profilePublishing()) {
+                    <span class="material-symbols-outlined btn-icon--spin">progress_activity</span>
+                    Building your page…
+                  } @else {
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    Publish profile page
+                  }
+                </button>
+                @if (profilePublishing()) {
+                  <p class="use-status-text">Generating and uploading — about 20 seconds.</p>
+                }
+                @if (profilePublishError()) {
+                  <p class="use-error-text" role="alert">{{ profilePublishError() }}</p>
+                }
+              } @else {
+                <div class="profile-url-card">
+                  <div class="profile-url-live-badge">
+                    <span class="live-dot" aria-hidden="true"></span>
+                    Live
+                  </div>
+                  <a class="profile-url-link" [href]="profileUrl()" target="_blank" rel="noopener noreferrer">
+                    {{ profileUrl() }}
+                  </a>
+                  <div class="profile-url-actions">
+                    <button class="strip-btn strip-btn--ghost strip-btn--sm" type="button" (click)="copyProfileUrlClicked.emit()">
+                      <span class="material-symbols-outlined">{{ profileUrlCopied() ? 'check' : 'link' }}</span>
+                      {{ profileUrlCopied() ? 'Copied' : 'Copy link' }}
+                    </button>
+                    <a class="strip-btn strip-btn--ghost strip-btn--sm" [href]="profileUrl()" target="_blank" rel="noopener noreferrer">
+                      <span class="material-symbols-outlined">open_in_new</span>
+                      Open
+                    </a>
+                  </div>
+                  <button class="use-republish-btn" type="button" (click)="publishProfileClicked.emit()" [disabled]="profilePublishing()">
+                    {{ profilePublishing() ? 'Updating…' : 'Regenerate page' }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Card 2 — Interview practice -->
+        <div class="use-card" [class.use-card--expanded]="expandedCard() === 'interview'">
+          <button class="use-card__trigger" type="button" (click)="toggleCard('interview')">
+            <span class="use-card__icon material-symbols-outlined">record_voice_over</span>
+            <div class="use-card__text">
+              <span class="use-card__title">Practice interviews</span>
+              <span class="use-card__desc">Let an AI interview you as yourself</span>
+            </div>
+            <span class="use-card__chevron material-symbols-outlined">
+              {{ expandedCard() === 'interview' ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+
+          @if (expandedCard() === 'interview') {
+            <div class="use-card__body">
+              <p class="use-card__body-text">
+                Use your identity document to practice with any AI — the questions will be shaped around
+                how you actually think, not a generic template.
+              </p>
+              <ol class="interview-steps">
+                @for (item of interviewSteps; track $index) {
+                  <li class="interview-step">
+                    <span class="interview-step__num">{{ item.step }}</span>
+                    <span class="interview-step__text">{{ item.instruction }}</span>
+                  </li>
+                }
+              </ol>
+              <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
+                <span class="material-symbols-outlined">content_copy</span>
+                Copy document to start
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Card 3 — Brainstorm -->
+        <div class="use-card" [class.use-card--expanded]="expandedCard() === 'brainstorm'">
+          <button class="use-card__trigger" type="button" (click)="toggleCard('brainstorm')">
+            <span class="use-card__icon material-symbols-outlined">lightbulb</span>
+            <div class="use-card__text">
+              <span class="use-card__title">Think with AI</span>
+              <span class="use-card__desc">Career decisions, blind spots, future vision</span>
+            </div>
+            <span class="use-card__chevron material-symbols-outlined">
+              {{ expandedCard() === 'brainstorm' ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+
+          @if (expandedCard() === 'brainstorm') {
+            <div class="use-card__body">
+              <p class="use-card__body-text">
+                Paste your document into any AI app, then use one of these prompts to start
+                a conversation that actually knows who you are.
+              </p>
+              <div class="starter-prompts">
+                @for (prompt of starterPrompts(); track $index) {
+                  <div class="starter-prompt">
+                    <div class="starter-prompt__header">
+                      <span class="starter-prompt__label">{{ prompt.label }}</span>
+                      <button
+                        class="starter-prompt__copy"
+                        type="button"
+                        (click)="copyStarterPrompt($index)"
+                        [attr.aria-label]="'Copy ' + prompt.label + ' prompt'"
+                      >
+                        <span class="material-symbols-outlined">
+                          {{ copiedPromptIndex() === $index ? 'check' : 'content_copy' }}
+                        </span>
+                        {{ copiedPromptIndex() === $index ? 'Copied' : 'Copy' }}
+                      </button>
+                    </div>
+                    <p class="starter-prompt__text">{{ prompt.text }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Card 4 — Own AI app -->
+        <div class="use-card" [class.use-card--expanded]="expandedCard() === 'save'">
+          <button class="use-card__trigger" type="button" (click)="toggleCard('save')">
+            <span class="use-card__icon material-symbols-outlined">integration_instructions</span>
+            <div class="use-card__text">
+              <span class="use-card__title">Use in your AI setup</span>
+              <span class="use-card__desc">Custom GPTs, system prompts, agents</span>
+            </div>
+            <span class="use-card__chevron material-symbols-outlined">
+              {{ expandedCard() === 'save' ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+
+          @if (expandedCard() === 'save') {
+            <div class="use-card__body">
+              <p class="use-card__body-text">
+                This document is a system prompt. Paste it as the instructions for a Custom GPT,
+                a Claude Project, a Cursor rule, or any agent that should sound like you.
+                Anywhere you write a system prompt — this goes there.
+              </p>
+              <ul class="use-tips">
+                <li><strong>Custom GPT</strong> — paste into "Instructions" in the GPT editor</li>
+                <li><strong>Claude Projects</strong> — paste into "Project instructions"</li>
+                <li><strong>Cursor / Copilot</strong> — add to your <code>.cursorrules</code> or custom instructions</li>
+                <li><strong>Any chat</strong> — paste at the start of a new conversation before your first message</li>
+              </ul>
+              <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
+                <span class="material-symbols-outlined">content_copy</span>
+                Copy document
+              </button>
+            </div>
+          }
+        </div>
+
+      </div>
+    </section>
 
   </div>
 </div>

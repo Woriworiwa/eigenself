@@ -1,25 +1,18 @@
-// ─── Host ─────────────────────────────────────────────────────────────────────
-
-:host {
-  display: block;
-  min-height: 100vh;
-  background: #221c10;
-}
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ─── Tokens ───────────────────────────────────────────────────────────────────
 
 $gold:        #eead2b;
 $bg:          #221c10;
 $bg-section:  rgba(255, 255, 255, 0.03);
 $bg-card:     rgba(255, 255, 255, 0.025);
 $gold-border: rgba(238, 173, 43, 0.18);
-$gold-dim:    rgba(238, 173, 43, 0.10);
+$gold-dim:    rgba(238, 173, 43, 0.08);
+$gold-mid:    rgba(238, 173, 43, 0.14);
 $text:        #f1ece0;
 $muted:       #8a8070;
+$muted-lt:    #b0a890;
 $radius-sm:   6px;
 $radius-md:   10px;
 $radius-lg:   16px;
-$radius-xl:   20px;
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
 
@@ -37,12 +30,23 @@ $radius-xl:   20px;
   to { transform: rotate(360deg); }
 }
 
-// ─── Shell ────────────────────────────────────────────────────────────────────
+@keyframes expandCard {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ─── Host & shell ─────────────────────────────────────────────────────────────
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: $bg;
+}
 
 .reveal-shell {
   min-height: 100vh;
   background: $bg;
-  font-family: 'Inter', 'DM Sans', sans-serif;
+  font-family: 'DM Sans', 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   display: flex;
   justify-content: center;
@@ -102,7 +106,8 @@ $radius-xl:   20px;
   font-size: 0.9rem;
   color: $muted;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.65;
+  max-width: 560px;
 }
 
 // ─── Document panel ───────────────────────────────────────────────────────────
@@ -112,7 +117,7 @@ $radius-xl:   20px;
   border: 1px solid $gold-border;
   border-radius: $radius-lg;
   overflow: hidden;
-  max-height: 55vh;
+  max-height: 52vh;
   display: flex;
   flex-direction: column;
 }
@@ -128,11 +133,9 @@ $radius-xl:   20px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: $muted;
+  flex-shrink: 0;
 
-  .material-symbols-outlined {
-    font-size: 0.95rem;
-    color: $gold;
-  }
+  .material-symbols-outlined { font-size: 0.95rem; color: $gold; }
 }
 
 .document-content {
@@ -155,152 +158,346 @@ $radius-xl:   20px;
   margin: 0;
 }
 
-// ─── Actions ─────────────────────────────────────────────────────────────────
+// ─── Copy / download strip ────────────────────────────────────────────────────
 
-.reveal-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.copy-confirmation {
+.reveal-strip {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.82rem;
-  color: $gold;
-  min-height: 1.2em;
-
-  .material-symbols-outlined { font-size: 0.95rem; }
+  gap: 0.65rem;
+  flex-wrap: wrap;
 }
 
-// ─── Buttons ─────────────────────────────────────────────────────────────────
-
-.btn {
+.strip-confirmation {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  flex: 1;
-  padding: 0.875rem 1.25rem;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: $gold;
+  margin-left: 0.25rem;
+
+  .material-symbols-outlined { font-size: 0.9rem; }
+}
+
+// ─── Shared buttons ───────────────────────────────────────────────────────────
+
+.strip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.1rem;
   border-radius: $radius-md;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter 0.15s, transform 0.1s;
+
+  .material-symbols-outlined { font-size: 1rem; }
+  &:active { transform: scale(0.97); }
+  &:focus-visible { outline: 2px solid $gold; outline-offset: 3px; }
+  &[disabled] { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+}
+
+.strip-btn--gold  { background: $gold; color: $bg; &:hover { filter: brightness(1.1); } }
+.strip-btn--ghost { background: $bg-section; color: $text; border: 1px solid $gold-border; &:hover { background: $gold-dim; } }
+.strip-btn--sm    { padding: 0.5rem 0.875rem; font-size: 0.8rem; }
+
+// ─── Uses section ─────────────────────────────────────────────────────────────
+
+.uses-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid $gold-border;
+}
+
+.uses-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $muted;
+  margin: 0;
+  padding-top: 0.25rem;
+}
+
+// ─── 2×2 grid ─────────────────────────────────────────────────────────────────
+
+.uses-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ─── Use card ─────────────────────────────────────────────────────────────────
+
+.use-card {
+  background: $bg-card;
+  border: 1px solid $gold-border;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  transition: border-color 0.2s;
+
+  &:hover,
+  &.use-card--expanded {
+    border-color: rgba($gold, 0.35);
+  }
+}
+
+.use-card__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1rem 1rem 1rem;
+  background: none;
+  border: none;
+  color: $text;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+
+  &:hover { background: $gold-dim; }
+  &:focus-visible { outline: 2px solid $gold; outline-offset: -2px; border-radius: $radius-lg; }
+}
+
+.use-card__icon {
+  font-size: 1.35rem;
+  color: $gold;
+  flex-shrink: 0;
+}
+
+.use-card__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.use-card__title {
   font-size: 0.9rem;
+  font-weight: 700;
+  color: $text;
+  line-height: 1.2;
+}
+
+.use-card__desc {
+  font-size: 0.75rem;
+  color: $muted;
+  line-height: 1.35;
+}
+
+.use-card__chevron {
+  font-size: 1.1rem;
+  color: $muted;
+  flex-shrink: 0;
+  transition: color 0.15s;
+
+  .use-card:hover & { color: $gold; }
+}
+
+// ─── Card body (expanded) ─────────────────────────────────────────────────────
+
+.use-card__body {
+  padding: 0 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  animation: expandCard 0.25s ease both;
+  border-top: 1px solid $gold-border;
+  padding-top: 1rem;
+}
+
+.use-card__body-text {
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: $muted-lt;
+  margin: 0;
+}
+
+// ─── Action buttons inside cards ──────────────────────────────────────────────
+
+.use-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.65rem 1.1rem;
+  border-radius: $radius-md;
+  font-size: 0.85rem;
   font-weight: 700;
   font-family: inherit;
   border: none;
   cursor: pointer;
   transition: filter 0.15s, transform 0.1s;
-  text-decoration: none;
 
-  .material-symbols-outlined { font-size: 1.1rem; }
-
+  .material-symbols-outlined { font-size: 1rem; }
   &:active { transform: scale(0.97); }
-
-  &:focus-visible {
-    outline: 2px solid $gold;
-    outline-offset: 3px;
-  }
-
-  &[disabled] {
-    opacity: 0.45;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
+  &:focus-visible { outline: 2px solid $gold; outline-offset: 3px; }
+  &[disabled] { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 }
 
-.btn--gold {
-  background: $gold;
-  color: $bg;
+.use-action-btn--gold  { background: $gold; color: $bg; &:hover { filter: brightness(1.1); } }
+.use-action-btn--ghost { background: $bg-section; color: $text; border: 1px solid $gold-border; &:hover { background: $gold-dim; } }
 
-  &:hover { filter: brightness(1.1); }
-}
+.btn-icon--spin { animation: spin 1s linear infinite; }
 
-.btn--ghost {
-  background: $bg-section;
-  color: $text;
-  border: 1px solid $gold-border;
+.use-status-text { font-size: 0.78rem; color: $muted; font-style: italic; margin: 0; }
+.use-error-text  { font-size: 0.78rem; color: #e57373; margin: 0; }
 
-  &:hover { background: $gold-dim; }
-}
+// ─── Interview steps ──────────────────────────────────────────────────────────
 
-.btn--sm {
-  flex: none;
-  padding: 0.55rem 1rem;
-  font-size: 0.82rem;
-}
-
-.btn--publish {
-  flex: none;
-  align-self: flex-start;
-  padding: 0.875rem 1.75rem;
-}
-
-.btn-icon--spin {
-  animation: spin 1s linear infinite;
-}
-
-// ─── Profile publishing ───────────────────────────────────────────────────────
-
-.profile-publish-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.profile-publish-divider {
-  height: 1px;
-  background: $gold-border;
-}
-
-.profile-publish-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.profile-publish-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: $text;
+.interview-steps {
+  list-style: none;
+  padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
-.profile-publish-desc {
-  font-size: 0.85rem;
-  color: $muted;
+.interview-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.interview-step__num {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: rgba($gold, 0.12);
+  border: 1px solid rgba($gold, 0.3);
+  color: $gold;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.interview-step__text {
+  font-size: 0.8rem;
   line-height: 1.6;
-  margin: 0;
+  color: $muted-lt;
 }
 
-.profile-publish-status {
-  font-size: 0.82rem;
+// ─── Brainstorm starter prompts ───────────────────────────────────────────────
+
+.starter-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.starter-prompt {
+  border: 1px solid $gold-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.starter-prompt__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid $gold-border;
+  background: rgba($gold, 0.04);
+}
+
+.starter-prompt__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $gold;
+}
+
+.starter-prompt__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: inherit;
   color: $muted;
-  font-style: italic;
-  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 0.15s;
+
+  .material-symbols-outlined { font-size: 0.85rem; }
+  &:hover { color: $text; }
 }
 
-.profile-publish-error {
-  font-size: 0.82rem;
-  color: #e57373;
+.starter-prompt__text {
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: rgba($text, 0.55);
+  padding: 0.6rem 0.75rem;
   margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Courier New', monospace;
 }
 
-// ─── Profile URL card ─────────────────────────────────────────────────────────
+// ─── Use in your AI setup tips ────────────────────────────────────────────────
+
+.use-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  li {
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: $muted-lt;
+    padding-left: 1rem;
+    position: relative;
+
+    &::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: rgba($gold, 0.5);
+      font-size: 0.75rem;
+    }
+
+    strong { color: $text; font-weight: 600; }
+    code { font-family: 'Courier New', monospace; font-size: 0.75rem; color: rgba($gold, 0.8); }
+  }
+}
+
+// ─── Profile URL card (inside share card) ─────────────────────────────────────
 
 .profile-url-card {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  padding: 1.25rem 1.5rem;
-  background: rgba($gold, 0.05);
-  border: 1.5px solid rgba($gold, 0.25);
-  border-radius: $radius-lg;
+  gap: 0.75rem;
 }
 
 .profile-url-live-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -308,8 +505,8 @@ $radius-xl:   20px;
 }
 
 .live-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #4ade80;
   animation: pulse 2s ease-in-out infinite;
@@ -317,31 +514,25 @@ $radius-xl:   20px;
 }
 
 .profile-url-link {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: $gold;
   word-break: break-all;
   text-decoration: none;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Courier New', monospace;
 
   &:hover { text-decoration: underline; }
-
-  &:focus-visible {
-    outline: 2px solid $gold;
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
 }
 
 .profile-url-actions {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
-.profile-republish-btn {
+.use-republish-btn {
   background: none;
   border: none;
   color: $muted;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-family: inherit;
   cursor: pointer;
   padding: 0;

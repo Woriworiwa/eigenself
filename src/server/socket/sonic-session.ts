@@ -66,11 +66,14 @@ export async function createSonicSession(
   // ── System prompt ──────────────────────────────────────────────────────────
 
   const voiceSuffix = '\n\nIMPORTANT FOR VOICE: You are speaking out loud. Keep responses to 1-3 short sentences. No lists, no bullet points, no markdown. Sound like a thoughtful person having a real conversation.';
+
+  const openingInstruction = '\n\nSTART THE CONVERSATION: When the user sends "hi" or any short greeting at the start, treat it as a session-start signal — do not respond to the greeting itself. Instead, jump straight into your opening question as if the conversation has already begun.';
+
   const effectiveSystem = systemPrompt || SYSTEM_PROMPT;
 
   const fullSystemPrompt = cvText
-    ? `${effectiveSystem}\n\n---\n\nCV PROVIDED (read before the conversation starts):\n\n${cvText}\n\n---\n\nYou have read this CV. Do not ask about career history, job titles, or skills listed here. Open with something specific from the CV, then focus on what the CV cannot tell you: how they think, how they communicate, what they would never say.${voiceSuffix}`
-    : `${effectiveSystem}${voiceSuffix}`;
+    ? `${effectiveSystem}\n\n---\n\nCV PROVIDED (read before the conversation starts):\n\n${cvText}\n\n---\n\nYou have read this CV. Do not ask about career history, job titles, or skills listed here. Open with something specific from the CV, then focus on what the CV cannot tell you: how they think, how they communicate, what they would never say.${voiceSuffix}${openingInstruction}`
+    : `${effectiveSystem}${voiceSuffix}${openingInstruction}`;
 
   // ── Initialise the Bedrock stream ──────────────────────────────────────────
 

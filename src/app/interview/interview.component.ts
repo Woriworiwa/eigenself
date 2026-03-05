@@ -107,11 +107,23 @@ export class InterviewComponent implements OnDestroy {
     );
   }, { allowSignalWrites: true });
 
-  // Start mic once the sonic session is ready (skip if user manually paused)
+  // Track whether the sonic opening prompt has been sent for the current session
+  private _sonicOpeningPromptSent = false;
+
+  // Start mic once the sonic session is ready (skip if user manually paused).
+  // On first ready, send a silent trigger so the AI opens the conversation.
   private readonly _sonicReadyEffect = effect(() => {
     if (this.interviewMode() !== 'sonic') return;
     if (!this.sonicService.sessionReady() || this.sonicService.listening()) return;
     if (this.sonicUserPaused()) return;
+
+    if (!this._sonicOpeningPromptSent) {
+      this._sonicOpeningPromptSent = true;
+      // Send a neutral "hi" so Nova Sonic has a user turn to respond to.
+      // The system prompt instructs it to open with its first question — not react to this.
+      this.sonicService.sendText('hi');
+    }
+
     void this.sonicService.startListening();
   });
 
@@ -202,6 +214,7 @@ export class InterviewComponent implements OnDestroy {
   private async _startSonicSession(): Promise<void> {
     try {
       this.sonicUserPaused.set(false);
+      this._sonicOpeningPromptSent = false;
       await this.sonicService.connect();
       this.sonicService.startSession('', this.cvText() || undefined);
       // _sonicReadyEffect handles startListening() once sessionReady is true

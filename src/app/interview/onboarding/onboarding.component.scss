@@ -43,8 +43,9 @@
 .ob-conversation {
   flex: 1;
   overflow-y: auto;
-  padding: var(--sp-16) var(--sp-6) var(--sp-8);
+  padding: var(--sp-16) var(--sp-6) var(--sp-16);
   scroll-behavior: smooth;
+  scroll-padding-bottom: var(--sp-16);
 
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-track { background: transparent; }

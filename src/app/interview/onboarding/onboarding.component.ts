@@ -3,11 +3,11 @@ import {
   input,
   output,
   signal,
-  computed,
   OnInit,
   ChangeDetectionStrategy,
   ElementRef,
   viewChild,
+  viewChildren,
   AfterViewChecked,
 } from '@angular/core';
 import { InterviewMode } from '../interview.types';
@@ -60,6 +60,7 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
   cvPasteValue    = signal<string>('');
 
   private conversationEl = viewChild<ElementRef<HTMLElement>>('conversationEl');
+  private lastMsgEls = viewChildren<ElementRef<HTMLElement>>('lastMsg');
   private shouldScroll = false;
 
   // ── Static copy ───────────────────────────────────────────────────────────
@@ -83,13 +84,16 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
   ngAfterViewChecked(): void {
     if (this.shouldScroll) {
       this.shouldScroll = false;
-      setTimeout(() => this.scrollToBottom(), 0);
+      setTimeout(() => this.scrollToLastMessage(), 0);
     }
   }
 
-  private scrollToBottom(): void {
-    const el = this.conversationEl()?.nativeElement;
-    if (el) el.scrollTop = el.scrollHeight;
+  private scrollToLastMessage(): void {
+    const els = this.lastMsgEls();
+    const last = els[els.length - 1]?.nativeElement;
+    if (last) {
+      last.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }
 
   // ── Input handling ────────────────────────────────────────────────────────
@@ -208,6 +212,8 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
       this.agentTyping.set(false);
       this.step.set(nextStep);
       this.shouldScroll = true;
+      // second tick: inline affordance block will have rendered by now
+      setTimeout(() => this.scrollToLastMessage(), 50);
     }, 900);
   }
 }

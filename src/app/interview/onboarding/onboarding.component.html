@@ -4,10 +4,10 @@
   <div class="ob-conversation" #conversationEl>
     <div class="ob-conversation__inner">
 
-      @for (msg of messages(); track $index) {
+      @for (msg of messages(); track $index; let last = $last) {
 
         @if (msg.role === 'agent') {
-          <div class="ob-msg ob-msg--agent">
+          <div class="ob-msg ob-msg--agent" [class.ob-msg--last]="last" #lastMsg>
             <div class="ob-msg__mark" aria-hidden="true">e</div>
             <div class="ob-msg__body">
               @if (msg.isTyping) {
@@ -24,7 +24,7 @@
         }
 
         @if (msg.role === 'user') {
-          <div class="ob-msg ob-msg--user">
+          <div class="ob-msg ob-msg--user" [class.ob-msg--last]="last" #lastMsg>
             <p class="ob-msg__text">{{ msg.text }}</p>
           </div>
         }
@@ -33,7 +33,7 @@
 
       <!-- ── Inline CV affordance — appears after agent asks ─────── -->
       @if (step() === 'cv-decision' && !agentTyping()) {
-        <div class="ob-inline ob-inline--cv">
+        <div class="ob-inline ob-inline--cv" #lastMsg>
 
           @if (!cvFileName() && !cvPasteValue()) {
 
@@ -127,7 +127,7 @@
 
       <!-- ── Inline mode choice — appears after agent asks ────────── -->
       @if (step() === 'mode-decision' && !agentTyping()) {
-        <div class="ob-inline ob-inline--mode">
+        <div class="ob-inline ob-inline--mode" #lastMsg>
 
           @if (supportsSonic()) {
             <button

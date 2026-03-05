@@ -642,6 +642,17 @@
   color: var(--ink-3);
 }
 
+// ─── Section CTA ─────────────────────────────────────────────────────────────
+
+.w-section-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-8);
+  text-align: center;
+}
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 .w-wordmark {

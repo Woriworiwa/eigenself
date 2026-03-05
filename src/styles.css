@@ -81,6 +81,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Routed components rendered by router-outlet must fill remaining height */
+app-root > app-welcome {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+app-root > app-interview {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 button { font-family: inherit; cursor: pointer; }
 input, textarea { font-family: inherit; }
 

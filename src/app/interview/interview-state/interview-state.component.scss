@@ -20,7 +20,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: var(--bg);
 }
@@ -30,7 +30,7 @@
 .iv-shell {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   background: var(--bg);
   font-family: var(--font-body);

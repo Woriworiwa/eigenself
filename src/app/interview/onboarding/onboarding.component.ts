@@ -82,8 +82,8 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
 
   ngAfterViewChecked(): void {
     if (this.shouldScroll) {
-      this.scrollToBottom();
       this.shouldScroll = false;
+      setTimeout(() => this.scrollToBottom(), 0);
     }
   }
 

@@ -29,47 +29,10 @@
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 .w-shell {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
   animation: fadeUp 0.4s ease both;
-}
-
-// ─── Wordmark ─────────────────────────────────────────────────────────────────
-
-.w-wordmark {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 500;
-  font-style: italic;
-  letter-spacing: -0.01em;
-  color: var(--ink-2);
-}
-
-// ─── Nav ──────────────────────────────────────────────────────────────────────
-
-.w-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--sp-6) var(--sp-8);
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.w-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-6);
-}
-
-.w-nav-link {
-  font-size: 0.875rem;
-  color: var(--ink-3);
-  text-decoration: none;
-  transition: color 0.15s;
-
-  &:hover { color: var(--ink); }
 }
 
 // ─── Shared button ────────────────────────────────────────────────────────────
@@ -482,6 +445,15 @@
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
+
+.w-wordmark {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+}
 
 .w-footer {
   margin-top: auto;

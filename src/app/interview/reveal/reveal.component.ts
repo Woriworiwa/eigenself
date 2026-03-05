@@ -32,13 +32,6 @@ export class RevealComponent {
   publishProfileClicked  = output<void>();
   copyProfileUrlClicked  = output<void>();
 
-  // ── Which "use" card is expanded ────────────────────────────────────────────
-  expandedCard = signal<'share' | 'interview' | 'brainstorm' | 'save' | null>(null);
-
-  toggleCard(card: 'share' | 'interview' | 'brainstorm' | 'save'): void {
-    this.expandedCard.update(c => c === card ? null : card);
-  }
-
   // ── Interview practice instructions ───────────────────────────────────────
 
   readonly interviewSteps: { step: string; instruction: string }[] = [

@@ -67,7 +67,7 @@ export async function createSonicSession(
 
   const voiceSuffix = '\n\nIMPORTANT FOR VOICE: You are speaking out loud. Keep responses to 1-3 short sentences. No lists, no bullet points, no markdown. Sound like a thoughtful person having a real conversation.';
 
-  const openingInstruction = '\n\nSTART THE CONVERSATION: When the user sends "hi" or any short greeting at the start, treat it as a session-start signal — do not respond to the greeting itself. Instead, jump straight into your opening question as if the conversation has already begun.';
+  const openingInstruction = '\n\nSTART THE CONVERSATION: When the user sends "hi" or any short greeting at the start, treat it as a session-start signal. Respond with your warm opening — introduce the conversation, briefly remove any pressure (this is just a conversation, no right answers), and close with your first soft question. Keep it to 2-3 short spoken sentences. Do not echo the greeting itself.';
 
   const effectiveSystem = systemPrompt || SYSTEM_PROMPT;
 

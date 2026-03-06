@@ -7,6 +7,8 @@ import {
   ChangeDetectionStrategy,
   inject,
   DestroyRef,
+  viewChild,
+  ElementRef,
 } from '@angular/core';
 
 import { environment } from '../../environments/environment';
@@ -162,6 +164,129 @@ export class InterviewComponent implements OnDestroy {
   // Falls back to /api/chat if the agent is not configured.
   useAgent = signal<boolean>(true);
 
+  // ── Camera preview ─────────────────────────────────────────────────────────
+
+  readonly cameraBubble = viewChild<ElementRef<HTMLDivElement>>('cameraBubble');
+  readonly cameraPreview = viewChild<ElementRef<HTMLVideoElement>>('cameraPreview');
+  readonly cameraGranted = signal<boolean>(false);
+  private cameraStream: MediaStream | null = null;
+  private _pendingCameraStream: MediaStream | null = null;
+  private _dragCleanup: (() => void) | null = null;
+  private static readonly CAMERA_SIZE = 120; // px — must match CSS width
+
+  // Assigns the pending camera stream once the bubble enters the DOM
+  private readonly _cameraEffect = effect(() => {
+    const state = this.currentState();
+    const video = this.cameraPreview()?.nativeElement;
+    const bubble = this.cameraBubble()?.nativeElement;
+    if (state === 'interview' && video && bubble && this._pendingCameraStream) {
+      this.cameraStream = this._pendingCameraStream;
+      this._pendingCameraStream = null;
+      video.srcObject = this.cameraStream;
+      this._initDrag(bubble);
+    } else if (state !== 'interview') {
+      this._stopCamera();
+    }
+  });
+
+  // Call this before switching to interview state so the browser shows
+  // the camera prompt first, separately from the microphone prompt.
+  private async _requestCamera(): Promise<void> {
+    try {
+      this._pendingCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      this.cameraGranted.set(true);
+    } catch {
+      // Denied or unavailable — interview continues without camera preview
+      this.cameraGranted.set(false);
+    }
+  }
+
+  private _stopCamera(): void {
+    this._dragCleanup?.();
+    this._dragCleanup = null;
+    this._pendingCameraStream?.getTracks().forEach(t => t.stop());
+    this._pendingCameraStream = null;
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(t => t.stop());
+      this.cameraStream = null;
+    }
+    this.cameraGranted.set(false);
+  }
+
+  closeCamera(): void {
+    this._stopCamera();
+  }
+
+  private _initDrag(el: HTMLElement): void {
+    const size = InterviewComponent.CAMERA_SIZE;
+    const margin = 24;
+
+    // Place in bottom-right initially
+    el.style.left = `${window.innerWidth - size - margin}px`;
+    el.style.top = `${window.innerHeight - size - margin}px`;
+
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    const clamp = (val: number, max: number) => Math.max(0, Math.min(max, val));
+
+    const onMouseMove = (e: MouseEvent) => {
+      el.style.left = `${clamp(startLeft + e.clientX - startX, window.innerWidth - size)}px`;
+      el.style.top  = `${clamp(startTop  + e.clientY - startY, window.innerHeight - size)}px`;
+    };
+
+    const onMouseUp = () => {
+      el.style.cursor = 'grab';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = parseInt(el.style.left, 10);
+      startTop  = parseInt(el.style.top,  10);
+      el.style.cursor = 'grabbing';
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup',   onMouseUp);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      el.style.left = `${clamp(startLeft + t.clientX - startX, window.innerWidth - size)}px`;
+      el.style.top  = `${clamp(startTop  + t.clientY - startY, window.innerHeight - size)}px`;
+    };
+
+    const onTouchEnd = () => {
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend',  onTouchEnd);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      startLeft = parseInt(el.style.left, 10);
+      startTop  = parseInt(el.style.top,  10);
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend',  onTouchEnd);
+    };
+
+    el.addEventListener('mousedown',  onMouseDown);
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+
+    this._dragCleanup = () => {
+      el.removeEventListener('mousedown',  onMouseDown);
+      el.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup',   onMouseUp);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend',  onTouchEnd);
+    };
+  }
+
   // ── Private internals ──────────────────────────────────────────────────────
 
   private mediaRecorder: MediaRecorder | null = null;
@@ -172,6 +297,7 @@ export class InterviewComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.sonicService.disconnect();
     this.stopRecording();
+    this._stopCamera();
     this.timers.forEach(clearTimeout);
     if (window.speechSynthesis) window.speechSynthesis.cancel();
   }
@@ -255,10 +381,12 @@ export class InterviewComponent implements OnDestroy {
   }
 
   async startInterview(): Promise<void> {
+    // Camera permission first — browser shows it as a separate prompt before mic
+    await this._requestCamera();
     this.currentState.set('interview');
 
     if (this.interviewMode() === 'sonic') {
-      await this._startSonicSession();
+      await this._startSonicSession(); // mic requested here, after camera
       return;
     }
 

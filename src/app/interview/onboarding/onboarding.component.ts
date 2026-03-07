@@ -4,6 +4,7 @@ import {
   output,
   signal,
   OnInit,
+  AfterViewInit,
   ChangeDetectionStrategy,
   ElementRef,
   viewChild,
@@ -32,7 +33,7 @@ type ObStep =
   styleUrl: './onboarding.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OnboardingComponent implements OnInit, AfterViewChecked {
+export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChecked {
 
   // ── Inputs ────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
 
   private conversationEl = viewChild<ElementRef<HTMLElement>>('conversationEl');
   private lastMsgEls = viewChildren<ElementRef<HTMLElement>>('lastMsg');
+  private nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
   private shouldScroll = false;
 
   // ── Static copy ───────────────────────────────────────────────────────────
@@ -79,6 +81,10 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
   ngOnInit(): void {
     // Show the opening message immediately — no delay, no stagger
     this.messages.set([{ role: 'agent', text: this.INTRO_MSG }]);
+  }
+
+  ngAfterViewInit(): void {
+    this.nameInput()?.nativeElement.focus();
   }
 
   ngAfterViewChecked(): void {

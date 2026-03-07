@@ -1,70 +1,6 @@
 <div class="iv-shell" [attr.data-mode]="interviewMode()" role="main" aria-label="Interview in progress">
 
 
-  <!-- ── Voice status bar ────────────────────────────────────────────── -->
-  @if (interviewMode() === 'sonic' || interviewMode() === 'voice-text') {
-    <section class="iv-voice-status" aria-live="polite">
-      <div class="iv-mic-wrapper" aria-hidden="true">
-        <div class="iv-mic-pulse"></div>
-        <div class="iv-mic-core">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            @if (isSonicSpeaking()) {
-              <path d="M9 18V5l12-2v13M9 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm12-2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/>
-            } @else {
-              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
-              <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
-            }
-          </svg>
-        </div>
-      </div>
-      <div class="iv-voice-status__text">
-        <p class="iv-voice-status__label">
-          @if (isSonicSpeaking()) { Speaking… }
-          @else if (isSonicListening() || isRecording()) { Listening… }
-          @else if (agentTyping()) { Thinking… }
-          @else { Ready }
-        </p>
-        <p class="iv-voice-status__sublabel">
-          @if (voiceTranscript()) { "{{ voiceTranscript() }}" }
-          @else if (isSonicSpeaking()) { Nova is responding }
-          @else if (isSonicListening() || isRecording()) { Processing your voice }
-          @else if (agentTyping()) { Composing next question }
-          @else { Your turn to speak }
-        </p>
-      </div>
-    </section>
-  }
-
-  <!-- ── Text mode status bar ────────────────────────────────────────── -->
-  @if (interviewMode() === 'text') {
-    <section class="iv-text-status" aria-live="polite">
-      <div class="iv-text-status__model">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          @if (useAgent()) {
-            <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
-            <line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/>
-          } @else {
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          }
-        </svg>
-        <span>
-          @if (useAgent()) { Bedrock Agent · questions adapt to your answers }
-          @else { Nova 2 Lite · direct model }
-        </span>
-      </div>
-      @if (agentTyping()) {
-        <div class="iv-text-status__thinking">
-          <span class="iv-typing-dot"></span>
-          <span class="iv-typing-dot"></span>
-          <span class="iv-typing-dot"></span>
-          <span class="iv-text-status__thinking-label">
-            {{ useAgent() ? 'Agent thinking…' : 'Nova thinking…' }}
-          </span>
-        </div>
-      }
-    </section>
-  }
-
   <!-- ── Conversation ─────────────────────────────────────────────────── -->
   <main class="iv-conversation" #conversationBody>
     <div class="iv-conversation__inner">
@@ -253,6 +189,20 @@
       }
 
       <div class="iv-footer__end">
+        @if (interviewMode() === 'sonic' || interviewMode() === 'voice-text') {
+          <p class="iv-status-chip" aria-live="polite">
+            @if (isSonicSpeaking()) { Speaking… }
+            @else if (isSonicListening() || isRecording()) { Listening… }
+            @else if (agentTyping()) { Thinking… }
+            @else { Ready · your turn }
+          </p>
+        }
+        @if (interviewMode() === 'text') {
+          <p class="iv-status-chip" aria-live="polite">
+            @if (agentTyping()) { {{ useAgent() ? 'Agent' : 'Nova' }} thinking… }
+            @else { {{ useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite' }} }
+          </p>
+        }
         <button class="iv-btn-end" type="button" (click)="endInterview.emit()">
           End interview
         </button>

@@ -61,7 +61,7 @@ agentChatRouter.post('/', async (req: Request, res: Response) => {
     if (cvText) {
       fullMessage = `[SYSTEM — interview starting. CV provided below. Read it, then open the interview with a specific observation from it before moving to what it cannot tell you.]\n\n${cvText}\n\n---\n\n${message}`;
     } else {
-      fullMessage = `[SYSTEM — interview starting. No CV provided. Open the interview with your first question to learn who this person is.]`;
+      fullMessage = `[SYSTEM — interview starting. No CV provided. Open the interview with your first question to learn who this person is.]\n\n---\n\n${message}`;
     }
   }
 

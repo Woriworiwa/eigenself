@@ -44,11 +44,11 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
                 </svg>
-                {{ cvUploading() ? 'Reading…' : 'Upload CV' }}
+                {{ cvUploading() ? 'Reading…' : 'Upload file' }}
                 <input
                   id="cv-file-input"
                   type="file"
-                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                   (change)="cvFileChanged.emit($event)"
                   [disabled]="cvUploading()"
                   class="ob-file-hidden"
@@ -80,30 +80,32 @@
               <p class="ob-cv-error" role="alert">{{ cvError() }}</p>
             }
 
-            <!-- Paste area -->
-            @if (cvPasteExpanded()) {
-              <div class="ob-paste-area">
-                <textarea
-                  class="ob-paste-textarea"
-                  placeholder="Paste your CV here…"
-                  [value]="cvPasteValue()"
-                  (input)="onCvPasteInput($event)"
-                  rows="7"
-                  autofocus
-                ></textarea>
-                <div class="ob-paste-footer">
-                  <span class="ob-paste-count">{{ cvPasteValue().length }} chars</span>
-                  <div class="ob-paste-actions">
-                    @if (cvPasteValue()) {
-                      <button class="ob-paste-btn ob-paste-btn--clear" type="button" (click)="clearCvPaste()">Clear</button>
-                      <button class="ob-paste-btn ob-paste-btn--confirm" type="button" (click)="confirmCvPaste()">Done →</button>
-                    }
-                  </div>
+          }
+
+          <!-- Paste area — outside the !cvPasteValue() guard so typing doesn't destroy it -->
+          @if (cvPasteExpanded() && !cvFileName()) {
+            <div class="ob-paste-area">
+              <textarea
+                class="ob-paste-textarea"
+                placeholder="Paste anything — CV, transcript, cover letter…"
+                [value]="cvPasteValue()"
+                (input)="onCvPasteInput($event)"
+                rows="7"
+                autofocus
+              ></textarea>
+              <div class="ob-paste-footer">
+                <span class="ob-paste-count">{{ cvPasteValue().length }} chars</span>
+                <div class="ob-paste-actions">
+                  @if (cvPasteValue()) {
+                    <button class="ob-paste-btn ob-paste-btn--clear" type="button" (click)="clearCvPaste()">Clear</button>
+                    <button class="ob-paste-btn ob-paste-btn--confirm" type="button" (click)="confirmCvPaste()">Done →</button>
+                  }
                 </div>
               </div>
-            }
+            </div>
+          }
 
-          } @else if (cvFileName()) {
+          @if (cvFileName()) {
 
             <!-- File uploaded — confirm or remove -->
             <div class="ob-cv-loaded">
@@ -115,7 +117,7 @@
             </div>
             <div class="ob-cv-loaded-actions">
               <button class="ob-cv-chip ob-cv-chip--confirm" type="button" (click)="confirmCvFile()">
-                Use this CV →
+                Use this →
               </button>
               <button class="ob-cv-chip ob-cv-chip--skip" type="button" (click)="skipCv()">Skip</button>
             </div>

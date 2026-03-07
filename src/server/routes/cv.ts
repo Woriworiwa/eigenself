@@ -34,9 +34,9 @@ cvRouter.post('/parse-cv', upload.single('cv'), async (req: Request, res: Respon
       return;
     }
 
-    // Trim and cap at 6000 chars — enough for any CV, avoids bloating the prompt
-    const trimmed = text.replace(/\s+/g, ' ').trim().slice(0, 6000);
-    console.log(`CV parsed: ${trimmed.length} characters from ${originalname}`);
+    // Trim and cap at 8000 chars — covers CVs, transcripts, cover letters, .md protocols
+    const trimmed = text.replace(/\s+/g, ' ').trim().slice(0, 8000);
+    console.log(`Document parsed: ${trimmed.length} characters from ${originalname}`);
 
     res.json({ cvText: trimmed });
   } catch (error) {
@@ -98,5 +98,15 @@ async function extractText(buffer: Buffer, mimetype: string, filename: string): 
     return result.value;
   }
 
-  throw new Error('Unsupported file type. Please upload a PDF or DOCX.');
+  const isText =
+    mimetype === 'text/plain' ||
+    mimetype === 'text/markdown' ||
+    filename.endsWith('.txt') ||
+    filename.endsWith('.md');
+
+  if (isText) {
+    return buffer.toString('utf-8');
+  }
+
+  throw new Error('Unsupported file type. Please upload a PDF, DOCX, TXT, or MD file.');
 }

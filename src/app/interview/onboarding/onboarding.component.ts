@@ -69,7 +69,7 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
     `Before we start — a quick word about what this is.\n\nI'm not going to ask you to list your skills or summarise your experience. I've read enough CVs. I'm more interested in how you actually think, what lights you up, and what makes you different from everyone with the same job title.\n\nThis will take around 15 minutes. No script, no right answers.\n\nWhat's your name?`;
 
   private readonly CV_ASK_MSG =
-    `Good to meet you. Do you have a CV you'd like me to read before we start? If you do, I'll use it to skip the obvious questions and focus on what it can't tell me. Entirely optional — we can also just talk.`;
+    `Good to meet you. Do you have anything you'd like me to read before we start? A CV, a cover letter, a previous session transcript, or anything else that gives me context. I'll use it to skip the obvious and focus on what it can't tell me. Entirely optional — we can also just talk.`;
 
   private readonly MODE_ASK_MSG =
     `One last thing — how would you like to do this? You can speak and I'll listen in real time, or type if you'd rather go at your own pace. You can switch any time.`;
@@ -150,7 +150,7 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
     const text = this.cvPasteValue().trim();
     if (!text) return;
     this.cvPasted.emit(text);
-    this.addUserMessage('Here\'s my CV — I\'ve pasted it in.');
+    this.addUserMessage('Here\'s some context — I\'ve pasted it in.');
     this.cvPasteExpanded.set(false);
     this.showAgentMessage(this.MODE_ASK_MSG, 'mode-decision');
   }
@@ -169,7 +169,7 @@ export class OnboardingComponent implements OnInit, AfterViewChecked {
   confirmCvFile(): void {
     const name = this.cvFileName();
     if (!name) return;
-    this.addUserMessage(`I've uploaded my CV — ${name}.`);
+    this.addUserMessage(`I've uploaded ${name}.`);
     this.showAgentMessage(this.MODE_ASK_MSG, 'mode-decision');
   }
 

@@ -398,7 +398,7 @@ export class InterviewComponent implements OnDestroy {
     // of whether a CV was provided. cvText is injected in sendToAgent()
     // on the first turn automatically.
     const openingPrompt = this.cvText()
-      ? 'Please open the interview. You have the CV — use something specific from it to start, then move to what the CV cannot tell you.'
+      ? 'Please open the interview. You have the document — use something specific from it to start, then move to what it cannot tell you.'
       : 'Please open the interview with your first question.';
 
     const opening = await this.sendToAgent(openingPrompt);
@@ -428,10 +428,13 @@ export class InterviewComponent implements OnDestroy {
     const allowed = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'text/markdown',
     ];
-    const nameOk = file.name.endsWith('.pdf') || file.name.endsWith('.docx');
+    const nameOk = file.name.endsWith('.pdf') || file.name.endsWith('.docx') ||
+                   file.name.endsWith('.txt') || file.name.endsWith('.md');
     if (!allowed.includes(file.type) && !nameOk) {
-      this.cvError.set('Please upload a PDF or Word document.');
+      this.cvError.set('Please upload a PDF, Word document, or Markdown file.');
       return;
     }
 

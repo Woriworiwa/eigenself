@@ -72,7 +72,7 @@ export async function createSonicSession(
   const effectiveSystem = systemPrompt || SYSTEM_PROMPT;
 
   const fullSystemPrompt = cvText
-    ? `${effectiveSystem}\n\n---\n\nCV PROVIDED (read before the conversation starts):\n\n${cvText}\n\n---\n\nYou have read this CV. Do not ask about career history, job titles, or skills listed here. Open with something specific from the CV, then focus on what the CV cannot tell you: how they think, how they communicate, what they would never say.${voiceSuffix}${openingInstruction}`
+    ? `${effectiveSystem}\n\n---\n\nDOCUMENT PROVIDED (read before the conversation starts — could be a CV, cover letter, previous session transcript, or other context):\n\n${cvText}\n\n---\n\nYou have read this document. Use it to skip the obvious and open with something specific from it. Focus on what it cannot tell you: how they think, how they communicate, what they would never say.${voiceSuffix}${openingInstruction}`
     : `${effectiveSystem}${voiceSuffix}${openingInstruction}`;
 
   // ── Initialise the Bedrock stream ──────────────────────────────────────────

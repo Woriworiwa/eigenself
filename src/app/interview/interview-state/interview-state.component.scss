@@ -37,58 +37,6 @@
   -webkit-font-smoothing: antialiased;
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-.iv-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-4) var(--sp-6);
-  border-bottom: 1px solid var(--line-soft);
-  background: var(--bg);
-  flex-shrink: 0;
-}
-
-.iv-header__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-}
-
-.iv-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  flex-shrink: 0;
-  animation: glowPulse 2.5s ease-in-out infinite;
-}
-
-.iv-header__title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.iv-header__title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--ink);
-  margin: 0;
-  line-height: 1;
-}
-
-.iv-header__subtitle {
-  font-size: 0.7rem;
-  color: var(--ink-4);
-  margin: 0;
-}
-
-.iv-header__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
 
 // ─── Shared buttons ───────────────────────────────────────────────────────────
 
@@ -337,6 +285,20 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+}
+
+.iv-footer__row {
+  display: flex;
+  align-items: center;
+  max-width: 580px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.iv-footer__end {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--sp-1);
 }
 
 // ─── Text input row ───────────────────────────────────────────────────────────

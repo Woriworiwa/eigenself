@@ -1,55 +1,5 @@
 <div class="iv-shell" [attr.data-mode]="interviewMode()" role="main" aria-label="Interview in progress">
 
-  <!-- ── Header ──────────────────────────────────────────────────────── -->
-  <header class="iv-header">
-
-    <div class="iv-header__brand">
-      <div class="iv-indicator" aria-hidden="true"></div>
-      <div class="iv-header__title-group">
-        <h2 class="iv-header__title">
-          @if (interviewMode() === 'sonic') { Nova 2 Sonic }
-          @else if (useAgent()) { Bedrock Agent }
-          @else { Nova 2 Lite }
-        </h2>
-        <p class="iv-header__subtitle">interview in progress</p>
-      </div>
-    </div>
-
-    <div class="iv-header__actions">
-
-      @if (interviewMode() !== 'sonic') {
-        <div class="iv-mode-switch" role="group" aria-label="Model mode">
-          <button
-            class="iv-mode-switch__opt"
-            [class.iv-mode-switch__opt--active]="!useAgent()"
-            type="button"
-            (click)="useAgent() && agentToggled.emit()"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
-            Direct
-          </button>
-          <button
-            class="iv-mode-switch__opt"
-            [class.iv-mode-switch__opt--active]="useAgent()"
-            type="button"
-            (click)="!useAgent() && agentToggled.emit()"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
-              <line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/>
-            </svg>
-            Agent
-          </button>
-        </div>
-      }
-
-      <button class="iv-btn-end" type="button" (click)="endInterview.emit()">
-        End interview
-      </button>
-    </div>
-  </header>
 
   <!-- ── Voice status bar ────────────────────────────────────────────── -->
   @if (interviewMode() === 'sonic' || interviewMode() === 'voice-text') {
@@ -248,6 +198,33 @@
 
       <!-- Text mode -->
       @if (interviewMode() === 'text') {
+        <div class="iv-footer__row">
+          <div class="iv-mode-switch" role="group" aria-label="Model mode">
+            <button
+              class="iv-mode-switch__opt"
+              [class.iv-mode-switch__opt--active]="!useAgent()"
+              type="button"
+              (click)="useAgent() && agentToggled.emit()"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              Direct
+            </button>
+            <button
+              class="iv-mode-switch__opt"
+              [class.iv-mode-switch__opt--active]="useAgent()"
+              type="button"
+              (click)="!useAgent() && agentToggled.emit()"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
+                <line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/>
+              </svg>
+              Agent
+            </button>
+          </div>
+        </div>
         <div class="iv-text-input-row">
           <label for="iv-text-field" class="visually-hidden">Your message</label>
           <input
@@ -274,6 +251,12 @@
           </button>
         </div>
       }
+
+      <div class="iv-footer__end">
+        <button class="iv-btn-end" type="button" (click)="endInterview.emit()">
+          End interview
+        </button>
+      </div>
 
     </footer>
   }

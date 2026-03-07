@@ -77,7 +77,22 @@ export async function createSonicSession(
 
   // ── Initialise the Bedrock stream ──────────────────────────────────────────
 
-  enqueue({ event: { sessionStart: { inferenceConfiguration: { maxTokens: 1024, topP: 0.9, temperature: 0.7 } } } });
+  // How long (ms) of silence after speech before Nova considers the turn complete
+  // and starts responding. Default AWS value is ~300ms — too fast for natural pauses.
+  // Raise this if Nova keeps cutting the user off mid-sentence.
+  const END_OF_SPEECH_TIMEOUT_MS = parseInt(process.env['SONIC_END_OF_SPEECH_TIMEOUT_MS'] ?? '800', 10);
+
+  enqueue({
+    event: {
+      sessionStart: {
+        inferenceConfiguration: { maxTokens: 1024, topP: 0.9, temperature: 0.7 },
+        voiceActivityDetectionConfiguration: {
+          startTimeout: 300,
+          endTimeout: END_OF_SPEECH_TIMEOUT_MS,
+        },
+      },
+    },
+  });
   enqueue({
     event: {
       promptStart: {

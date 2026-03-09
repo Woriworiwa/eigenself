@@ -3,10 +3,11 @@ import {
   input,
   output,
   signal,
-  computed,
   ChangeDetectionStrategy,
+  WritableSignal,
 } from '@angular/core';
 import { IdentityDocument } from '../interview.types';
+import { environment } from '../../../environments/environment';
 
 export interface StarterPrompt {
   label: string;
@@ -59,30 +60,94 @@ export class RevealComponent {
 
   // ── Brainstorm starter prompts ────────────────────────────────────────────
 
-  readonly starterPrompts = computed((): StarterPrompt[] => {
-    const doc = this.identityDoc();
-    const raw = doc?.raw ?? '';
-    const docBlock = `\n\n---\n${raw}\n---\n\n`;
-    return [
-      {
-        label: 'Career decisions',
-        text: `Here is my identity document — it captures how I think, what I value, and how I communicate:${docBlock}I am considering [describe your situation or decision]. Based on who I am, what would you advise? Be honest, not generic.`,
-      },
-      {
-        label: 'Future visioning',
-        text: `Here is my identity document:${docBlock}Based on my strengths, thinking style, and values described here — what kinds of work, roles, or projects do you think I would find genuinely meaningful five years from now? Be specific.`,
-      },
-      {
-        label: 'Blind spots',
-        text: `Here is my identity document:${docBlock}Reading this honestly — what patterns do you notice that might be limiting me without my realising it? What am I likely not seeing about myself?`,
-      },
-    ];
-  });
+  readonly starterPrompts: StarterPrompt[] = [
+    {
+      label: 'Career decisions',
+      text: `I am considering [describe your situation or decision]. Based on who I am, what would you advise? Be honest, not generic.`,
+    },
+    {
+      label: 'Future visioning',
+      text: `Based on my strengths, thinking style, and values described here — what kinds of work, roles, or projects do you think I would find genuinely meaningful five years from now? Be specific.`,
+    },
+    {
+      label: 'Blind spots',
+      text: `Reading this honestly — what patterns do you notice that might be limiting me without my realising it? What am I likely not seeing about myself?`,
+    },
+  ];
 
-  copiedPromptIndex = signal<number | null>(null);
+  copiedPromptIndex    = signal<number | null>(null);
+  openAccordionIndex   = signal<number | null>(null);
+
+  toggleAccordion(index: number): void {
+    this.openAccordionIndex.update(current => current === index ? null : index);
+  }
+
+  // ── Evaluate fit ────────────────────────────────────────────────────────────
+  jobPostForEval  = signal('');
+  evalLoading     = signal(false);
+  evalResult      = signal('');
+  evalError       = signal('');
+  evalCopied      = signal(false);
+
+  // ── Generate letter ─────────────────────────────────────────────────────────
+  jobPostForLetter = signal('');
+  letterLoading    = signal(false);
+  letterResult     = signal('');
+  letterError      = signal('');
+  letterCopied     = signal(false);
+
+  async evaluateFit(): Promise<void> {
+    const protocol = this.identityDoc()?.raw;
+    if (!protocol || !this.jobPostForEval().trim()) return;
+    this.evalLoading.set(true);
+    this.evalResult.set('');
+    this.evalError.set('');
+    try {
+      const r = await fetch(`${environment.apiUrl}/api/evaluate-fit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ protocol, jobPost: this.jobPostForEval() }),
+      });
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      this.evalResult.set(data.report);
+    } catch (e) {
+      this.evalError.set(e instanceof Error ? e.message : 'Something went wrong');
+    } finally {
+      this.evalLoading.set(false);
+    }
+  }
+
+  async generateLetter(): Promise<void> {
+    const protocol = this.identityDoc()?.raw;
+    if (!protocol || !this.jobPostForLetter().trim()) return;
+    this.letterLoading.set(true);
+    this.letterResult.set('');
+    this.letterError.set('');
+    try {
+      const r = await fetch(`${environment.apiUrl}/api/generate-letter`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ protocol, jobPost: this.jobPostForLetter() }),
+      });
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      this.letterResult.set(data.letter);
+    } catch (e) {
+      this.letterError.set(e instanceof Error ? e.message : 'Something went wrong');
+    } finally {
+      this.letterLoading.set(false);
+    }
+  }
+
+  async copyResult(text: string, copiedSignal: WritableSignal<boolean>): Promise<void> {
+    await this.copyToClipboard(text);
+    copiedSignal.set(true);
+    setTimeout(() => copiedSignal.set(false), 2000);
+  }
 
   async copyStarterPrompt(index: number): Promise<void> {
-    const prompts = this.starterPrompts();
+    const prompts = this.starterPrompts;
     if (!prompts[index]) return;
     await this.copyToClipboard(prompts[index].text);
     this.copiedPromptIndex.set(index);

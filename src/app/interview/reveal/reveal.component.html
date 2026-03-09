@@ -1,208 +1,348 @@
-<div class="reveal-shell" role="main" aria-label="Your identity document">
-  <div class="reveal-container">
+<div class="reveal-shell">
 
-    <!-- ── Header ───────────────────────────────────────────────────── -->
-    <header class="reveal-header">
+  <!-- ── Two-column layout ────────────────────────────────────────────── -->
+  <main class="main-layout">
 
-      <h1 class="reveal-title">Your AI identity document is ready.</h1>
-
-    </header>
-
-    <!-- ── Document panel ──────────────────────────────────────────── -->
-    <div class="reveal-document-panel" aria-label="Identity document">
-      <div class="document-header" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-        </svg>
-        identity-protocol.md
+    <!-- Left: document -->
+    <div class="doc-col">
+      <div class="doc-header">
+        <h1 class="doc-title">Your identity document is ready.</h1>
+        <div class="doc-actions" role="toolbar" aria-label="Document actions">
+          @if (copyConfirmation()) {
+            <span class="bar-confirmation" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              {{ copyConfirmation() }}
+            </span>
+          }
+          <button class="bar-btn bar-btn--ghost" type="button" (click)="downloadDocumentClicked.emit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download
+          </button>
+          <button class="bar-btn bar-btn--primary" type="button" (click)="copyDocumentClicked.emit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+            Copy
+          </button>
+        </div>
       </div>
-      <div class="document-content">
-        <pre class="document-pre">{{ identityDoc()?.raw }}</pre>
-      </div>
+      <pre class="document-pre">{{ identityDoc()?.raw }}</pre>
     </div>
 
-    <!-- ── Strip ────────────────────────────────────────────────────── -->
-    <div class="reveal-strip">
-      <button class="strip-btn strip-btn--primary" type="button" (click)="copyDocumentClicked.emit()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <rect x="9" y="9" width="13" height="13" rx="2"/>
-          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-        </svg>
-        Copy document
-      </button>
-      <button class="strip-btn strip-btn--ghost" type="button" (click)="downloadDocumentClicked.emit()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Download .md
-      </button>
-      @if (copyConfirmation()) {
-        <span class="strip-confirmation" role="status" aria-live="polite">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          {{ copyConfirmation() }}
-        </span>
-      }
-    </div>
+    <!-- Right: accordion -->
+    <div class="tools-col">
+      <div class="tools-intro">
+        <p class="tools-label">What can you do with this?</p>
+        <p class="tools-desc">Your protocol is live. There are many ways to use it — send it to an employer, feed it to an AI, publish it as a page. Here are a few places to start.</p>
+      </div>
 
-    <!-- ── Uses ─────────────────────────────────────────────────────── -->
-    <section class="uses-section" aria-label="What you can do with your identity document">
-      <h2 class="uses-heading">What can you do with this?</h2>
+      <div class="accordion">
 
-      <div class="uses-grid">
-
-        <!-- Share -->
-        <div class="use-tile">
-          <span class="use-tile__icon">🌐</span>
-          <div class="use-tile__body">
-            <span class="use-tile__title">Share a profile</span>
-            <p class="use-tile__desc">
-              We'll generate a designed web page from your document and host it for you —
-              a private link you share on your own terms.
-            </p>
-            @if (!profileUrl()) {
+        <!-- 0 · Evaluate fit -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 0"
+            aria-controls="acc-panel-0"
+            (click)="toggleAccordion(0)">
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Evaluate fit</span>
+              <span class="agent-badge">AI agent</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 0"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 0"
+            id="acc-panel-0" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                Paste a job description. Get an honest fit report — what aligns,
+                what doesn't, deal-breakers triggered, and what to lead with.
+              </p>
+              <textarea
+                class="use-textarea"
+                placeholder="Paste the job description here…"
+                [value]="jobPostForEval()"
+                (input)="jobPostForEval.set($any($event.target).value)"
+                rows="5"
+                aria-label="Job description for fit evaluation">
+              </textarea>
               <button
                 class="use-action-btn use-action-btn--primary"
                 type="button"
-                (click)="publishProfileClicked.emit()"
-                [disabled]="profilePublishing()"
-              >
-                @if (profilePublishing()) { Building your page… }
-                @else { Publish profile page }
+                (click)="evaluateFit()"
+                [disabled]="evalLoading() || !jobPostForEval().trim()">
+                @if (evalLoading()) { Evaluating… } @else { Evaluate fit }
               </button>
-              @if (profilePublishing()) {
-                <p class="use-status-text">Generating and uploading — about 20 seconds.</p>
+              @if (evalError()) {
+                <p class="use-error-text" role="alert">{{ evalError() }}</p>
               }
-              @if (profilePublishError()) {
-                <p class="use-error-text" role="alert">{{ profilePublishError() }}</p>
-              }
-            } @else {
-              <div class="profile-url-card">
-                <div class="profile-url-live-badge">
-                  <span class="live-dot" aria-hidden="true"></span>
-                  Live
-                </div>
-                <a class="profile-url-link" [href]="profileUrl()" target="_blank" rel="noopener noreferrer">
-                  {{ profileUrl() }}
-                </a>
-                <div class="profile-url-actions">
-                  <button class="strip-btn strip-btn--ghost strip-btn--sm" type="button" (click)="copyProfileUrlClicked.emit()">
-                    {{ profileUrlCopied() ? '✓ Copied' : 'Copy link' }}
-                  </button>
-                  <a class="strip-btn strip-btn--ghost strip-btn--sm" [href]="profileUrl()" target="_blank" rel="noopener noreferrer">
-                    Open ↗
-                  </a>
-                </div>
-                <button class="use-republish-btn" type="button" (click)="publishProfileClicked.emit()" [disabled]="profilePublishing()">
-                  {{ profilePublishing() ? 'Updating…' : 'Regenerate page' }}
-                </button>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Interview practice -->
-        <div class="use-tile">
-          <span class="use-tile__icon">🎙</span>
-          <div class="use-tile__body">
-            <span class="use-tile__title">Practice interviews</span>
-            <p class="use-tile__desc">
-              Feed the protocol to your AI agent. Ask it to interview you for a specific role —
-              questions shaped around how you actually think, not a generic template.
-            </p>
-            <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
-              Copy document to start
-            </button>
-          </div>
-        </div>
-
-        <!-- Measure fit -->
-        <div class="use-tile">
-          <span class="use-tile__icon">📋</span>
-          <div class="use-tile__body">
-            <span class="use-tile__title">Measure fit against a job post</span>
-            <p class="use-tile__desc">
-              Paste a job description alongside your protocol and ask your agent to evaluate the match —
-              what aligns, what doesn't, what to address. If the fit is strong, send the protocol
-              with your application.
-            </p>
-            <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
-              Copy document
-            </button>
-          </div>
-        </div>
-
-        <!-- Think with AI -->
-        <div class="use-tile">
-          <span class="use-tile__icon">💡</span>
-          <div class="use-tile__body">
-            <span class="use-tile__title">Think with AI</span>
-            <p class="use-tile__desc">
-              Career decisions, blind spots, future vision. Paste your protocol into any AI app
-              and start a conversation that actually knows who you are.
-            </p>
-            <div class="starter-prompts">
-              @for (prompt of starterPrompts(); track $index) {
-                <div class="starter-prompt">
-                  <div class="starter-prompt__header">
-                    <span class="starter-prompt__label">{{ prompt.label }}</span>
-                    <button class="starter-prompt__copy" type="button" (click)="copyStarterPrompt($index)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        @if (copiedPromptIndex() === $index) {
-                          <polyline points="20 6 9 17 4 12"/>
-                        } @else {
-                          <rect x="9" y="9" width="13" height="13" rx="2"/>
-                          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                        }
-                      </svg>
-                      {{ copiedPromptIndex() === $index ? 'Copied' : 'Copy' }}
+              @if (evalResult()) {
+                <div class="use-result-panel">
+                  <div class="use-result-header">
+                    <span>Fit report</span>
+                    <button class="result-copy-btn" type="button" (click)="copyResult(evalResult(), evalCopied)">
+                      {{ evalCopied() ? '✓ Copied' : 'Copy' }}
                     </button>
                   </div>
-                  <p class="starter-prompt__text">{{ prompt.text }}</p>
+                  <pre class="use-result-pre">{{ evalResult() }}</pre>
                 </div>
               }
             </div>
           </div>
         </div>
 
-        <!-- AI setup -->
-        <div class="use-tile">
-          <span class="use-tile__icon">⚙️</span>
-          <div class="use-tile__body">
-            <span class="use-tile__title">Use in your AI setup</span>
-            <p class="use-tile__desc">
-              This document is a system prompt. Paste it as instructions for a Custom GPT,
-              Claude Project, Cursor rule, or any agent that should sound like you.
-            </p>
-            <ul class="use-tips">
-              <li><strong>Custom GPT</strong> — paste into "Instructions" in the GPT editor</li>
-              <li><strong>Claude Projects</strong> — paste into "Project instructions"</li>
-              <li><strong>Cursor</strong> — add to your <code>.cursorrules</code> file</li>
-              <li><strong>Any chat</strong> — paste before your first message</li>
-            </ul>
-            <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
-              Copy document
-            </button>
+        <!-- 1 · Write a cover letter -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 1"
+            aria-controls="acc-panel-1"
+            (click)="toggleAccordion(1)">
+
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Write a cover letter</span>
+              <span class="agent-badge">AI agent</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 1"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 1"
+            id="acc-panel-1" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                Paste a job description. Get a letter written in your actual voice —
+                your phrases, your tone, your style. Not a template.
+              </p>
+              <textarea
+                class="use-textarea"
+                placeholder="Paste the job description here…"
+                [value]="jobPostForLetter()"
+                (input)="jobPostForLetter.set($any($event.target).value)"
+                rows="5"
+                aria-label="Job description for cover letter">
+              </textarea>
+              <button
+                class="use-action-btn use-action-btn--primary"
+                type="button"
+                (click)="generateLetter()"
+                [disabled]="letterLoading() || !jobPostForLetter().trim()">
+                @if (letterLoading()) { Writing… } @else { Write cover letter }
+              </button>
+              @if (letterError()) {
+                <p class="use-error-text" role="alert">{{ letterError() }}</p>
+              }
+              @if (letterResult()) {
+                <div class="use-result-panel">
+                  <div class="use-result-header">
+                    <span>Cover letter</span>
+                    <button class="result-copy-btn" type="button" (click)="copyResult(letterResult(), letterCopied)">
+                      {{ letterCopied() ? '✓ Copied' : 'Copy' }}
+                    </button>
+                  </div>
+                  <pre class="use-result-pre">{{ letterResult() }}</pre>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 · Share a profile -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 2"
+            aria-controls="acc-panel-2"
+            (click)="toggleAccordion(2)">
+
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Share a profile</span>
+              <span class="agent-badge">AI agent</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 2"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 2"
+            id="acc-panel-2" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                We'll generate a designed web page from your document and host it —
+                a private link you share on your own terms.
+              </p>
+              @if (!profileUrl()) {
+                <button
+                  class="use-action-btn use-action-btn--ghost"
+                  type="button"
+                  (click)="publishProfileClicked.emit()"
+                  [disabled]="profilePublishing()">
+                  @if (profilePublishing()) { Building your page… } @else { Publish profile page }
+                </button>
+                @if (profilePublishing()) {
+                  <p class="use-status-text">Generating and uploading — about 20 seconds.</p>
+                }
+                @if (profilePublishError()) {
+                  <p class="use-error-text" role="alert">{{ profilePublishError() }}</p>
+                }
+              } @else {
+                <div class="profile-url-card">
+                  <div class="profile-url-live-badge">
+                    <span class="live-dot" aria-hidden="true"></span>
+                    Live
+                  </div>
+                  <a class="profile-url-link" [href]="profileUrl()" target="_blank" rel="noopener noreferrer">
+                    {{ profileUrl() }}
+                  </a>
+                  <div class="profile-url-actions">
+                    <button class="bar-btn bar-btn--ghost bar-btn--sm" type="button" (click)="copyProfileUrlClicked.emit()">
+                      {{ profileUrlCopied() ? '✓ Copied' : 'Copy link' }}
+                    </button>
+                    <a class="bar-btn bar-btn--ghost bar-btn--sm" [href]="profileUrl()" target="_blank" rel="noopener noreferrer">
+                      Open ↗
+                    </a>
+                  </div>
+                  <button class="use-republish-btn" type="button" (click)="publishProfileClicked.emit()" [disabled]="profilePublishing()">
+                    {{ profilePublishing() ? 'Updating…' : 'Regenerate page' }}
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 · Practice interviews -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 3"
+            aria-controls="acc-panel-3"
+            (click)="toggleAccordion(3)">
+
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Practice interviews</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 3"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 3"
+            id="acc-panel-3" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                Feed the protocol to your AI agent. Ask it to interview you for a specific role —
+                questions shaped around how you actually think, not a generic template.
+              </p>
+              <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
+                Copy document to start
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 · Think with AI -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 4"
+            aria-controls="acc-panel-4"
+            (click)="toggleAccordion(4)">
+
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Think with AI</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 4"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 4"
+            id="acc-panel-4" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                Copy your protocol, paste it into any AI chat, then add one of these prompts
+                to start a conversation that actually knows who you are.
+              </p>
+              <div class="starter-prompts">
+                @for (prompt of starterPrompts; track $index) {
+                  <div class="starter-prompt">
+                    <div class="starter-prompt__header">
+                      <span class="starter-prompt__label">{{ prompt.label }}</span>
+                      <button class="result-copy-btn" type="button" (click)="copyStarterPrompt($index)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          @if (copiedPromptIndex() === $index) {
+                            <polyline points="20 6 9 17 4 12"/>
+                          } @else {
+                            <rect x="9" y="9" width="13" height="13" rx="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                          }
+                        </svg>
+                        {{ copiedPromptIndex() === $index ? 'Copied' : 'Copy' }}
+                      </button>
+                    </div>
+                    <p class="starter-prompt__text">{{ prompt.text }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 · Use in your AI setup -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 5"
+            aria-controls="acc-panel-5"
+            (click)="toggleAccordion(5)">
+
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Use in your AI setup</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 5"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 5"
+            id="acc-panel-5" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                This document is a system prompt. Paste it as instructions for a Custom GPT,
+                Claude Project, Cursor rule, or any agent that should sound like you.
+              </p>
+              <ul class="use-tips">
+                <li><strong>Custom GPT</strong> — paste into "Instructions" in the GPT editor</li>
+                <li><strong>Claude Projects</strong> — paste into "Project instructions"</li>
+                <li><strong>Cursor</strong> — add to your <code>.cursorrules</code> file</li>
+                <li><strong>Any chat</strong> — paste before your first message</li>
+              </ul>
+              <button class="use-action-btn use-action-btn--ghost" type="button" (click)="copyDocumentClicked.emit()">
+                Copy document
+              </button>
+            </div>
           </div>
         </div>
 
       </div>
-    </section>
-
-    <!-- ── Document panel ──────────────────────────────────────────── -->
-    <div class="reveal-document-panel" aria-label="Identity document">
-      <div class="document-header" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-        </svg>
-        identity-protocol.md
-      </div>
-      <div class="document-content">
-        <pre class="document-pre">{{ identityDoc()?.raw }}</pre>
-      </div>
     </div>
+  </main>
 
-  </div>
 </div>

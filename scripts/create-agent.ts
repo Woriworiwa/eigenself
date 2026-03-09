@@ -21,7 +21,7 @@ import {
   CreateAgentActionGroupCommand,
   GetAgentCommand,
 } from '@aws-sdk/client-bedrock-agent';
-import { AGENT_INSTRUCTIONS } from '../src/server/prompts/agent';
+import { AGENT_INSTRUCTIONS } from '../src/server/prompts/agent-interview';
 
 const REGION = 'us-east-1';
 const AGENT_NAME = 'eigenself-interviewer';

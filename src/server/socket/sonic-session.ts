@@ -20,7 +20,7 @@ import { InvokeModelWithBidirectionalStreamCommand } from '@aws-sdk/client-bedro
 import type { Socket } from 'socket.io';
 import { bedrock } from '../lib/aws';
 import { NOVA_SONIC_MODEL_ID } from '../lib/models';
-import { SYSTEM_PROMPT } from '../prompts/system';
+import { SYSTEM_PROMPT } from '../prompts/interview';
 import type { SonicSession, TranscriptEntry } from '../types';
 
 export async function createSonicSession(

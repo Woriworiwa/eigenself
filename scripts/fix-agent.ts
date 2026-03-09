@@ -28,7 +28,7 @@ import {
   GetAgentCommand,
   ListAgentActionGroupsCommand,
 } from '@aws-sdk/client-bedrock-agent';
-import { AGENT_INSTRUCTIONS } from '../src/server/prompts/agent';
+import { AGENT_INSTRUCTIONS } from '../src/server/prompts/agent-interview';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

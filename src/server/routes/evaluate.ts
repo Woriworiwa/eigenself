@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { bedrock } from '../lib/aws';
 import { NOVA_LITE_MODEL_ID } from '../lib/models';
-import { EVALUATOR_PROMPT } from '../prompts/evaluator';
+import { EVALUATOR_PROMPT } from '../prompts/fit-analysis';
 
 export const evaluateRouter = Router();
 

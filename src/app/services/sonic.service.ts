@@ -172,6 +172,7 @@ export class SonicService implements OnDestroy {
 
       this.workletNode.port.onmessage = (event: MessageEvent<ArrayBuffer>) => {
         if (!this.socket?.connected || !this.sessionReady()) return;
+        if (this.agentSpeaking()) return; // suppress mic while agent is speaking to avoid echo-driven false VAD triggers
         this.socket.emit('sonic:audio', new Uint8Array(event.data));
       };
 

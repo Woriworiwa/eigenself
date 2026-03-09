@@ -80,7 +80,7 @@ export async function createSonicSession(
   // How long (ms) of silence after speech before Nova considers the turn complete
   // and starts responding. Default AWS value is ~300ms — too fast for natural pauses.
   // Raise this if Nova keeps cutting the user off mid-sentence.
-  const END_OF_SPEECH_TIMEOUT_MS = parseInt(process.env['SONIC_END_OF_SPEECH_TIMEOUT_MS'] ?? '800', 10);
+  const END_OF_SPEECH_TIMEOUT_MS = parseInt(process.env['SONIC_END_OF_SPEECH_TIMEOUT_MS'] ?? '2000', 10);
 
   enqueue({
     event: {
@@ -89,6 +89,10 @@ export async function createSonicSession(
         voiceActivityDetectionConfiguration: {
           startTimeout: 300,
           endTimeout: END_OF_SPEECH_TIMEOUT_MS,
+        },
+        turnDetectionConfiguration: {
+          // LOW = ~2s pause before considering turn complete; reduces mid-sentence interruptions
+          endpointingSensitivity: 'LOW',
         },
       },
     },

@@ -4,6 +4,8 @@
 
 *What would AI say if it actually understood you? Eigenself is how you find out.*
 
+🔗 **Live demo:** https://d1k8d68asrg0f1.cloudfront.net
+
 ---
 
 ## What It Does

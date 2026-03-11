@@ -1,0 +1,230 @@
+<div class="ab-shell">
+
+  <!-- ── TOC sidebar ──────────────────────────────────────────────── -->
+  <aside class="ab-toc">
+    <nav class="ab-toc-inner">
+      <p class="ab-toc-label">On this page</p>
+      @for (section of sections; track section.id) {
+        <button
+          class="ab-toc-item"
+          [ngClass]="{ 'is-active': activeId() === section.id }"
+          (click)="scrollTo(section.id)">
+          {{ section.label }}
+        </button>
+      }
+    </nav>
+  </aside>
+
+  <!-- ── Main content ─────────────────────────────────────────────── -->
+  <main class="ab-main">
+
+    <header class="ab-header">
+      <p class="ab-eyebrow">Amazon Nova AI Hackathon · Voice AI Category</p>
+      <h1 class="ab-title">The Story</h1>
+    </header>
+
+    <!-- ── Inspiration ─────────────────────────────────────────────── -->
+    <section id="inspiration" class="ab-section">
+      <h2 class="ab-section-title">Inspiration</h2>
+      <p class="ab-body">
+        I have been building software for 20 years. I have built products, led teams, designed systems.
+        I know who I am and what I bring. And yet — when I started thinking about my next career move,
+        and about what AI was doing to the job market, I felt something I didn't expect.
+      </p>
+      <p class="ab-pull">Fear.</p>
+      <p class="ab-body">
+        Not of being unqualified. Of being <em>unreadable</em>. Of a world moving so fast,
+        with AI reshaping every hiring decision, every workflow, every definition of what a skilled
+        person looks like — and not knowing whether any of that experience, that nuance,
+        that <em>specific way I think and build</em> would survive the filter.
+      </p>
+      <p class="ab-body">
+        The systems that evaluate people — CVs, ATS filters, keyword matching — were not built
+        to understand anyone. They were built to sort. And the rise of AI in hiring has made
+        that worse, not better. Recruiters paste CVs into their AI assistant and ask
+        "is this person a fit?" The AI reads a list of skills and years of experience.
+        It has no idea who the person actually is.
+      </p>
+      <p class="ab-body">
+        That frustration was personal. But the idea that crystallized wasn't about fixing the CV —
+        it was about something deeper.
+      </p>
+      <p class="ab-body">
+        Most AI tools have some form of memory now — they remember things you've said, they recall
+        past conversations. But that memory is passive. It accumulates in the background without
+        you shaping it. You can't edit it, you can't audit it, you can't make it precisely represent
+        who you are. And you certainly can't hand it to a different tool, or to someone else's AI agent.
+      </p>
+      <p class="ab-body">
+        Those two threads came together into a single question:
+        <em>what if you could give AI a real understanding of who you are — captured in your own
+        voice, in a format any agent can load?</em>
+      </p>
+      <p class="ab-body">That question became Eigenself.</p>
+      <p class="ab-body">
+        I built my own protocol first. I sat down with the interview, answered the questions honestly —
+        about how I think, what drives me, where I draw the line, what kind of work energizes me
+        and what drains me. And when I read what came out the other side, I felt something I didn't expect.
+      </p>
+      <p class="ab-quote">
+        I felt at ease. I felt ready for the new era that is coming with AI.
+        I wasn't afraid anymore.
+      </p>
+      <p class="ab-body">That feeling is what this product is trying to give people.</p>
+    </section>
+
+    <!-- ── What It Does ────────────────────────────────────────────── -->
+    <section id="what-it-does" class="ab-section">
+      <h2 class="ab-section-title">What It Does</h2>
+      <p class="ab-body">
+        Eigenself conducts a 20-minute voice interview using Amazon Nova 2 Sonic, then synthesises
+        everything you said into a structured <code>.md</code> identity protocol — a machine-readable
+        document that captures not just what you have done, but how you think, what drives you,
+        how you communicate, and what makes you specifically you.
+      </p>
+      <p class="ab-body">
+        The protocol is designed to be loaded into any AI agent as a system prompt. Once loaded,
+        that agent can represent you accurately — not approximately. What you do with it from
+        there is up to you. Some examples of what's already built in:
+      </p>
+      <ul class="ab-list">
+        <li><strong>Evaluate job fit</strong> — paste a job description, get a scored fit report with what aligns, what doesn't, and any deal-breakers flagged</li>
+        <li><strong>Write cover letters</strong> — generated in your actual voice, grounded in your real values and experience</li>
+        <li><strong>Publish a web profile</strong> — a human-readable page hosted on S3 via CloudFront</li>
+        <li><strong>Power interview practice</strong> — feed the protocol to any AI and get questions calibrated to who you actually are</li>
+        <li><strong>Serve as your AI context layer</strong> — load it into Claude Projects, Custom GPTs, Cursor, or any AI tool you use daily</li>
+      </ul>
+      <p class="ab-body">
+        But these are just a starting point. The protocol is a portable identity layer —
+        its uses extend as far as AI itself does.
+      </p>
+    </section>
+
+    <!-- ── How I Built It ──────────────────────────────────────────── -->
+    <section id="how-i-built" class="ab-section">
+      <h2 class="ab-section-title">How I Built It</h2>
+      <p class="ab-body">
+        At a high level: the user speaks, Nova 2 Sonic listens and responds in real-time —
+        handling the entire voice conversation on its own. When the interview ends, Nova 2 Lite
+        reads the full transcript and writes the protocol. For users who prefer to type, a Bedrock
+        Agent guides the conversation instead, bringing session memory and adaptive questioning
+        across eight identity areas. Either way, the result is the same: a markdown file the
+        user owns. Everything runs on AWS.
+      </p>
+      <p class="ab-body ab-body--dim">For those who want the details:</p>
+      <p class="ab-body">
+        <strong>Nova 2 Sonic</strong> conducts the interview via a bidirectional WebSocket stream
+        managed by Socket.IO. The Angular frontend captures microphone input as 16kHz PCM via
+        Web Audio API AudioWorklet, streams it to the Node.js backend, which feeds it into the
+        Sonic session. Audio output returns as 24kHz PCM chunks, reassembled and played in the browser.
+      </p>
+      <p class="ab-body">
+        <strong>Bedrock Agents</strong> orchestrate the interview intelligence in text mode —
+        tracking which of eight identity sections have been covered, adapting questions based
+        on prior answers. The agent adds some latency compared to a direct model call, but
+        brings session memory that makes the conversation genuinely stateful.
+      </p>
+      <p class="ab-body">
+        <strong>Nova 2 Lite</strong> synthesises the protocol after the conversation ends —
+        reading the full transcript and producing a structured <code>.md</code> identity document
+        in second person. The same model handles fit evaluation, cover letter generation,
+        HTML profile generation, and fallback transcription.
+      </p>
+      <p class="ab-body">
+        <strong>S3 + CloudFront</strong> host published profiles.
+        <strong>DynamoDB</strong> stores profile slug records — used when a user publishes their web profile.
+      </p>
+      <p class="ab-body">
+        The frontend is Angular 21 with standalone components, signals throughout, and OnPush
+        change detection. The backend is Node.js + Express + TypeScript.
+      </p>
+    </section>
+
+    <!-- ── Challenges ──────────────────────────────────────────────── -->
+    <section id="challenges" class="ab-section">
+      <h2 class="ab-section-title">Challenges We Ran Into</h2>
+      <p class="ab-body">The hardest challenge had nothing to do with AI.</p>
+      <p class="ab-body">
+        It was CORS, nginx, and deployment infrastructure. Getting the Angular frontend on
+        CloudFront, the Express + Socket.IO backend on EC2, and the WebSocket connections
+        to survive nginx proxying — with the right headers, the right allowed origins,
+        the right proxy pass configuration — took longer than any of the AI integration work.
+      </p>
+      <p class="ab-quote">It is always the plumbing.</p>
+      <p class="ab-body">
+        The second challenge was prompt engineering for the identity protocol synthesis.
+        The temptation for a model doing synthesis is to pad — to fill sections with
+        reasonable-sounding content when the interview didn't actually cover them.
+        The instruction <em>"faithfulness over completeness — never invent, omit sections
+        with insufficient data"</em> had to be enforced explicitly and tested repeatedly.
+        A protocol that invents things about you is worse than no protocol at all.
+      </p>
+    </section>
+
+    <!-- ── Accomplishments ─────────────────────────────────────────── -->
+    <section id="proud-of" class="ab-section">
+      <h2 class="ab-section-title">Accomplishments That I'm Proud Of</h2>
+      <p class="ab-body">Two things, honestly.</p>
+      <p class="ab-body">
+        The first is the protocol format itself. When you run the interview and read what comes out,
+        it is genuinely useful — not a summary, not a list of bullet points, but something that
+        actually captures how a person thinks and communicates. That quality didn't come automatically.
+        It came from careful prompt engineering, from running the interview on myself, from iterating
+        on the faithfulness principle until the output earned trust. Getting that right matters more
+        than any technical achievement.
+      </p>
+      <p class="ab-body">
+        The second is shipping a complete, full-stack product solo in under two weeks. Nova 2 Sonic
+        integration, Bedrock Agents, Angular frontend with Web Audio API PCM capture, EC2 deployment
+        with nginx, CloudFront, S3, DynamoDB — all of it working together, end to end.
+        Not a demo. A product.
+      </p>
+    </section>
+
+    <!-- ── What I Learned ──────────────────────────────────────────── -->
+    <section id="learned" class="ab-section">
+      <h2 class="ab-section-title">What I Learned</h2>
+      <p class="ab-body">
+        The thing that surprised me most was how <em>easy and how powerful</em> it all was at
+        the same time — and that combination is what made it slightly unsettling in the best way.
+      </p>
+      <p class="ab-body">
+        Nova 2 Sonic is extraordinary. A single model that listens, understands, reasons, and
+        responds with natural voice — no Transcribe → LLM → Polly chain, no mechanical lag,
+        no seams. The interview feels like a real conversation because the model is doing all
+        of it at once. I had expected to spend weeks fighting the voice pipeline.
+        The power was there immediately.
+      </p>
+      <p class="ab-body">
+        The other thing I learned — from actually running the interview on myself — is that
+        the protocol format has a strange effect. When you read a well-structured identity
+        document about yourself, written in second person, faithful to what you actually said,
+        it does something. You slow down. You re-read sections. You think:
+        <em>"I've never put that into words before."</em>
+        The technology is the vehicle. The real product is the clarity.
+      </p>
+    </section>
+
+    <!-- ── What's Next ─────────────────────────────────────────────── -->
+    <section id="whats-next" class="ab-section">
+      <h2 class="ab-section-title">What's Next for Eigenself</h2>
+      <p class="ab-body">Right now, the goal is simple: win this hackathon.</p>
+      <p class="ab-body">
+        That's not deflection — it's honest prioritisation. I built Eigenself in two weeks,
+        solo, while holding down other work. The idea is proven. The core experience is live.
+        The product works.
+      </p>
+      <p class="ab-body">
+        But I also want to be clear about where it stands: Eigenself is not yet ready for
+        public use. The protocol needs more polishing, more edge case handling, more iterations
+        before it earns the trust of people who aren't early testers. The foundation is solid —
+        but there's real work still to do before thinking about what comes after.
+      </p>
+      <p class="ab-body">
+        The immediate next step is to make it genuinely useful. Not just working — useful.
+        That's the goal worth setting.
+      </p>
+    </section>
+
+  </main>
+</div>

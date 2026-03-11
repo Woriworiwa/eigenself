@@ -65,10 +65,13 @@ import { Router, RouterOutlet, RouterLink } from '@angular/router';
     <nav class="a-nav">
       <a class="a-wordmark" routerLink="/">eigenself</a>
       <div class="a-nav-actions">
-        @if (isWelcome()) {
-          <a href="#how-it-works" class="a-nav-link">How it works</a>
+        @if (isHome()) {
+          <a routerLink="/about" class="a-nav-link">The Story</a>
         }
-        @if (!isWelcome()) {
+        @if (isStory()) {
+          <a routerLink="/" class="a-nav-link">← Home</a>
+        }
+        @if (isInterview()) {
           <a routerLink="/" class="a-btn-start">← Start over</a>
         }
       </div>
@@ -79,7 +82,15 @@ import { Router, RouterOutlet, RouterLink } from '@angular/router';
 export class App {
   private router = inject(Router);
 
-  isWelcome(): boolean {
+  isHome(): boolean {
     return this.router.url === '/' || this.router.url === '';
+  }
+
+  isStory(): boolean {
+    return this.router.url === '/about';
+  }
+
+  isInterview(): boolean {
+    return this.router.url.startsWith('/interview');
   }
 }

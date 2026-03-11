@@ -1,42 +1,46 @@
-# Eigenself — AI-Native Identity Protocol Builder
+# Eigenself
 
-> **Amazon Nova AI Hackathon submission · Voice AI category**
+> **Amazon Nova AI Hackathon · Voice AI Category**
 
-LinkedIn, CVs, ATS systems — they reduce people to a list of keywords. Skills, years of experience, job titles. A matching algorithm decides your worth. It is cold, mechanical, and deeply dehumanizing. People feel it. That is why job searching feels so demoralizing.
-
-This product does the opposite. It says: **you are more than your skills list**. You have a voice, a way of thinking, things that energize you and things that drain you. You have a story. And we help you tell it — in a way that even AI agents can understand and respect.
-
-Eigenself conducts a voice conversation with you, finds what is uniquely human about you, and produces a structured `.md` identity protocol that AI agents can load, query, and reason over.
-
-This is not a CV builder. The CV is a byproduct. The primary output is a machine-readable protocol — built natively for the AI-powered hiring world that already exists.
+*What would AI say if it actually understood you? Eigenself is how you find out.*
 
 ---
 
 ## What It Does
 
-A user speaks. Amazon Nova 2 Sonic conducts the interview — conversational, unhurried, curious. Nova 2 Lite structures the output into a portable identity protocol. From that protocol, a professional bio and a legacy CV are rendered as secondary formats.
+Eigenself conducts a 20-minute voice interview using Amazon Nova 2 Sonic, then synthesises everything you said into a structured `.md` identity protocol — a machine-readable document that captures not just what you have done, but how you think, what drives you, how you communicate, and what makes you specifically you.
 
-The protocol is then the asset. Load it into any AI agent and ask: *"Is this person a fit for what we need?"*
+The protocol is designed to be loaded into any AI agent as a system prompt. Once loaded, that agent can represent you accurately — not approximately. What you do with it from there is up to you. Some examples of what's already built in:
 
-**Three outputs, ranked by importance:**
-1. **AI Protocol** — machine-readable `.md` structured for agent consumption
-2. **Professional Bio** — human-readable rendering for LinkedIn and portfolios
-3. **CV** — legacy rendering for systems that still require it
+- **Evaluate job fit** — paste a job description, get a scored fit report
+- **Write cover letters** — generated in your actual voice
+- **Publish a web profile** — hosted on S3 via CloudFront
+- **Power interview practice** — questions calibrated to who you actually are
+- **Serve as your AI context layer** — load into Claude Projects, Custom GPTs, Cursor, or any AI tool
+
+The `.md` file is not a document. It is a protocol. The CV becomes a legacy byproduct.
 
 ---
 
 ## Architecture
 
 ```
-Browser (Angular, port 4200)
-  └─ WebSocket / HTTP → Express server (port 3000)
-       └─ Amazon Nova 2 Sonic    → Voice interview engine
-       └─ Amazon Bedrock Agents  → Adaptive interview orchestration
-       └─ Bedrock Knowledge Base → Cross-session protocol memory
-       └─ Amazon Nova 2 Lite     → Protocol structuring + fit evaluation
+User speaks
+     ↓
+Nova 2 Sonic (Socket.IO bidirectional stream)
+     ↓ (voice path — Sonic handles full conversation state)
+Nova 2 Lite (identity protocol synthesis)
+     ↓
+S3 + CloudFront (profile hosting)
+     ↓
+DynamoDB (profile slug storage)
 ```
 
-In production, the Express server becomes an AWS Lambda function — no code changes required.
+For text mode, a Bedrock Agent replaces Nova 2 Sonic as the interview engine — bringing session memory and adaptive questioning across eight identity areas. Both paths converge on the same Nova 2 Lite synthesis step.
+
+**Frontend:** Angular 21, standalone components, Angular Signals, OnPush change detection, Socket.IO client, Web Audio API + AudioWorklet for PCM capture
+
+**Backend:** Node.js + Express + Socket.IO, TypeScript, AWS SDK v3
 
 ---
 
@@ -44,10 +48,12 @@ In production, the Express server becomes an AWS Lambda function — no code cha
 
 | Service | Role |
 |---|---|
-| **Amazon Nova 2 Sonic** | Speech-to-speech voice interview engine — unified STT + LLM + TTS in one model, natural turn-taking, tone interpretation |
-| **Amazon Nova 2 Lite** | Profile reasoning engine — structures interview output into the identity protocol using extended thinking (1M token context) |
-| **Amazon Bedrock Agents** | Adaptive interview orchestration — reads prior answers and decides the next question dynamically |
-| **Bedrock Knowledge Bases** | Cross-session protocol memory — stores and retrieves the user's protocol across visits without requiring login |
+| **Amazon Nova 2 Sonic** | Bidirectional voice interview engine — unified STT + LLM + TTS, natural turn-taking |
+| **Amazon Nova 2 Lite** | Protocol synthesis, fit evaluation, cover letter, HTML profile, transcription fallback |
+| **Amazon Bedrock Agents** | Text mode interview orchestration — adaptive, stateful, session memory |
+| **Amazon S3** | Profile hosting |
+| **Amazon CloudFront** | Profile delivery + cache invalidation |
+| **Amazon DynamoDB** | Profile slug storage (used when publishing a web profile) |
 
 ---
 
@@ -55,11 +61,11 @@ In production, the Express server becomes an AWS Lambda function — no code cha
 
 | Layer | Technology |
 |---|---|
-| Frontend | Angular 21, RxJS, Tailwind CSS, Nx |
-| Backend | Node.js, Express, TypeScript |
-| AI / AWS | Amazon Bedrock, Nova 2 Sonic, Nova 2 Lite, Bedrock Agents, Bedrock Knowledge Bases |
-| AWS SDK | `@aws-sdk/client-bedrock-runtime`, `@aws-sdk/client-bedrock-agent-runtime` |
-| Real-time | Socket.io (WebSocket bridge for voice streaming) |
+| Frontend | Angular 21, RxJS, Tailwind CSS, Signals |
+| Backend | Node.js, Express, TypeScript, Socket.IO |
+| AI / AWS | Nova 2 Sonic, Nova 2 Lite, Bedrock Agents, S3, CloudFront, DynamoDB, EC2 |
+| Real-time | Socket.IO WebSocket bridge for voice streaming |
+| Audio | Web Audio API, AudioWorklet, PCM capture |
 
 ---
 
@@ -68,10 +74,10 @@ In production, the Express server becomes an AWS Lambda function — no code cha
 ### Prerequisites
 
 - Node.js 18+
-- AWS account with Bedrock model access approved for:
-  - `amazon.nova-lite-v1:0` (Nova 2 Lite)
-  - `amazon.nova-sonic-v1:0` (Nova 2 Sonic)
-- AWS CLI configured locally (`aws configure`)
+- AWS account with Bedrock access approved for:
+  - `us.amazon.nova-2-lite-v1:0`
+  - `amazon.nova-2-sonic-v1:0`
+- AWS CLI configured (`aws configure`, region `us-east-1`)
 
 ### Install
 
@@ -83,33 +89,38 @@ npm install
 
 ### Configure
 
-Copy `.env.example` to `.env` and set your region:
+Create a `.env` file in the root:
 
 ```env
-AWS_REGION=us-east-1
+BEDROCK_AGENT_ID=your_agent_id
+BEDROCK_AGENT_ALIAS_ID=your_agent_alias_id
+EIGENSELF_S3_BUCKET=your_s3_bucket
+EIGENSELF_CF_DOMAIN=your_cloudfront_domain
+EIGENSELF_CF_DISTRIBUTION_ID=your_distribution_id
 ```
 
-AWS credentials are read from `~/.aws/credentials` automatically. Do not hardcode credentials. Do not commit the `.env` file.
+AWS credentials are read from `~/.aws/credentials` automatically. Do not hardcode credentials. Do not commit `.env`.
 
-### Run Locally (Two Terminals)
 
-**Terminal 1 — Angular frontend:**
-```bash
-npm start
-```
-Opens at `http://localhost:4200`
+### Run Locally
 
-**Terminal 2 — Express backend (Bedrock proxy):**
+**Terminal 1 — Express backend:**
 ```bash
 npm run server
 ```
 Runs at `http://localhost:3000`
 
+**Terminal 2 — Angular frontend:**
+```bash
+npm start
+```
+Opens at `http://localhost:4200`
+
+> Voice mode requires Chrome or Chromium (Web Audio Worklet API).
+
 ---
 
-## Interview Flow
-
-The app has five states, navigated sequentially:
+## App States
 
 ```
 Welcome → Onboarding → Interview → Processing → Reveal
@@ -117,44 +128,22 @@ Welcome → Onboarding → Interview → Processing → Reveal
 
 | State | What Happens |
 |---|---|
-| **Welcome** | Mission statement and entry point |
-| **Onboarding** | Mode selection — voice (Nova 2 Sonic) or text |
-| **Interview** | 5 adaptive questions via Nova 2 Sonic or text input |
-| **Processing** | Nova 2 Lite structures the protocol (animated thinking state) |
-| **Reveal** | Identity protocol displayed — copy AI Protocol, copy Bio, download CV |
+| **Welcome** | Landing page — tagline, how it works, who it's for |
+| **Onboarding** | Name → optional CV upload → mode selection (voice / text) |
+| **Interview** | Live conversation with Nova 2 Sonic (voice) or Bedrock Agent (text) |
+| **Processing** | Nova 2 Lite synthesises the protocol from the full transcript |
+| **Reveal** | Protocol displayed — evaluate fit, write cover letter, publish profile |
 
 ---
 
-## IAM Permissions
+## Key Technical Detail
 
-Minimum IAM permissions required for the backend:
+Nova 2 Sonic uses a bidirectional async streaming API (`InvokeModelWithBidirectionalStreamCommand`) requiring a persistent async generator. The implementation in `src/server/socket/sonic-session.ts` handles:
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock:InvokeModel",
-        "bedrock:InvokeModelWithResponseStream"
-      ],
-      "Resource": [
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0",
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-sonic-v1:0"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock:Retrieve",
-        "bedrock:RetrieveAndGenerate"
-      ],
-      "Resource": "arn:aws:bedrock:us-east-1:*:knowledge-base/*"
-    }
-  ]
-}
-```
+- Event queue management across the async generator lifecycle
+- Turn detection and end-of-speech timeout
+- Transcript deduplication — Bedrock replays completed TEXT blocks verbatim on each turn
+- Clean session teardown on conversation complete
 
 ---
 
@@ -164,36 +153,31 @@ Minimum IAM permissions required for the backend:
 eigenself/
 ├── src/
 │   ├── app/
-│   │   ├── welcome/          # Entry state
-│   │   ├── interview/        # Interview flow
-│   │   │   ├── onboarding/   # Mode selection
-│   │   │   ├── interview-state/  # Active interview
-│   │   │   ├── processing/   # Protocol generation
-│   │   │   └── reveal/       # Protocol display
+│   │   ├── welcome/              # Landing page
+│   │   ├── interview/            # Main state machine
+│   │   │   ├── onboarding/       # Name → CV → mode
+│   │   │   ├── interview-state/  # Live conversation
+│   │   │   ├── processing/       # Animated synthesis state
+│   │   │   └── reveal/           # Protocol + tools
 │   │   └── services/
-│   │       └── sonic.service.ts  # Nova 2 Sonic integration
-│   └── server/               # Express backend → Lambda-ready
-├── public/
-│   └── audio-processor.js    # Web Audio API worklet
-├── scripts/
-│   ├── create-agent.ts       # Bedrock Agent provisioning
-│   └── create-agent-role.ts  # IAM role setup
-└── server.js                 # Production server entry
+│   │       └── sonic.service.ts  # Nova 2 Sonic client
+│   └── server/
+│       ├── routes/               # REST endpoints
+│       ├── socket/               # Sonic session handlers
+│       ├── prompts/              # All model instructions
+│       └── lib/                  # AWS singletons
+└── public/
+    └── audio-processor.js        # AudioWorklet PCM processor
 ```
 
 ---
 
-## Hackathon Submission
+## About the Name
 
-- **Event:** Amazon Nova AI Hackathon
-- **Category:** Voice AI
-- **Primary model:** Amazon Nova 2 Sonic
-- **Deadline:** March 16, 2026
+**Eigen-** (German): *own, peculiar to, characteristic of a thing and nothing else*
+
+**Eigenself** = one's own characteristic self. Not the version you perform for a recruiter. Not the keywords on a CV. The thing underneath.
 
 ---
 
-## About Eigenself
-
-**Eigen-** (German prefix): *own, peculiar to, characteristic of*
-
-Eigenself = one's own characteristic self. Built for the world where AI reads your identity before any human does.
+*Amazon Nova AI Hackathon · Voice AI Category · March 2026*

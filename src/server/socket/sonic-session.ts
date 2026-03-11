@@ -199,9 +199,19 @@ export async function createSonicSession(
             completeSent = true;
           }
 
-          // Strip control tokens from what the client sees
-          const text = raw.replace(/\[CONVERSATION_COMPLETE\]/g, '').trim();
-          if (!text) continue;
+          // Skip Bedrock interruption signals (sent when user cuts off the agent)
+          try {
+            const parsed = JSON.parse(raw) as unknown;
+            if (parsed !== null && typeof parsed === 'object' && (parsed as Record<string, unknown>)['interrupted'] === true) {
+              continue;
+            }
+          } catch { /* not JSON — proceed normally */ }
+
+          // Strip control tokens and normalise newlines → space.
+          // Do NOT trim: edge whitespace from \n→space conversion is the separator
+          // between adjacent chunks, and trimming it causes "word1.Word2" run-ons.
+          const text = raw.replace(/\[CONVERSATION_COMPLETE\]/g, '').replace(/\n+/g, ' ');
+          if (!text.trim()) continue;
 
           // Accumulate server-side for the fullTranscript (sent on complete)
           if (transcriptBuffer.role === role) {

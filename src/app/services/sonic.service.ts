@@ -80,9 +80,17 @@ export class SonicService implements OnDestroy {
           if (last.text.includes(chunk.text)) {
             return transcript; // duplicate — discard
           }
+          // Ensure a space at the chunk boundary so sentence-final chunks like
+          // "Nicelabel." and next-chunk "How would…" don't run together.
+          const needsSpace =
+            last.text.length > 0 &&
+            chunk.text.length > 0 &&
+            last.text[last.text.length - 1] !== ' ' &&
+            chunk.text[0] !== ' ';
+          const joined = last.text + (needsSpace ? ' ' : '') + chunk.text;
           return [
             ...transcript.slice(0, -1),
-            { role: last.role, text: last.text + chunk.text },
+            { role: last.role, text: joined },
           ];
         } else {
           // New speaker — but first check if this is a replay of an older entry.

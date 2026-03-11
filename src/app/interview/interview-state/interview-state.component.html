@@ -47,48 +47,6 @@
 
       <!-- Sonic mode -->
       @if (interviewMode() === 'sonic') {
-        <div class="iv-controls">
-          <button
-            class="iv-ctrl"
-            [class.iv-ctrl--active]="isSonicListening()"
-            type="button"
-            (click)="micClicked.emit()"
-            [attr.aria-label]="isSonicListening() ? 'Mute' : 'Unmute'"
-          >
-            <div class="iv-ctrl__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                @if (isSonicListening()) {
-                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
-                  <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
-                } @else {
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                  <path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/>
-                  <path d="M17 16.95A7 7 0 015 12v-2m14 0v2c0 .9-.16 1.76-.45 2.55M12 19v4M8 23h8"/>
-                }
-              </svg>
-            </div>
-            <span class="iv-ctrl__label">{{ isSonicListening() ? 'Mute' : 'Unmute' }}</span>
-          </button>
-
-          <button
-            class="iv-ctrl"
-            [class.iv-ctrl--active]="isPaused()"
-            type="button"
-            (click)="pauseClicked.emit()"
-          >
-            <div class="iv-ctrl__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                @if (isPaused()) {
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                } @else {
-                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-                }
-              </svg>
-            </div>
-            <span class="iv-ctrl__label">{{ isPaused() ? 'Resume' : 'Pause' }}</span>
-          </button>
-        </div>
-
         <div class="iv-text-input-row">
           <label for="iv-sonic-field" class="visually-hidden">Type a message</label>
           <input
@@ -100,7 +58,26 @@
             (input)="onTextChange($event)"
             (keydown.enter)="sonicTextSubmit.emit()"
           />
-          <button class="iv-text-send" type="button" (click)="sonicTextSubmit.emit()" [disabled]="!currentTextInput().trim()">
+          <button
+            class="iv-mute-btn"
+            [class.iv-mute-btn--active]="isSonicListening()"
+            type="button"
+            (click)="micClicked.emit()"
+            [attr.aria-label]="isSonicListening() ? 'Mute' : 'Unmute'"
+            [attr.data-tooltip]="isSonicListening() ? 'Mic on · click to mute' : 'Mic muted · click to unmute'"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              @if (isSonicListening()) {
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+              } @else {
+                <line x1="1" y1="1" x2="23" y2="23"/>
+                <path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/>
+                <path d="M17 16.95A7 7 0 015 12v-2m14 0v2c0 .9-.16 1.76-.45 2.55M12 19v4M8 23h8"/>
+              }
+            </svg>
+          </button>
+          <button class="iv-text-send" type="button" (click)="sonicTextSubmit.emit()" [disabled]="!currentTextInput().trim()" aria-label="Send">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>

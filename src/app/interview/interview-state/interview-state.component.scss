@@ -266,6 +266,62 @@
   &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 
+// ─── Inline mute button (sonic mode) ─────────────────────────────────────────
+
+.iv-mute-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  color: var(--ink-4);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  svg { width: 18px; height: 18px; }
+
+  &:hover { color: var(--ink); border-color: var(--ink-4); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+
+.iv-mute-btn--active {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+.iv-mute-btn[data-tooltip] {
+  position: relative;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: var(--ink);
+    color: var(--bg);
+    font-size: 0.72rem;
+    font-weight: 500;
+    font-family: var(--font-body);
+    padding: 4px 8px;
+    border-radius: var(--r-sm);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
+}
+
 // ─── Voice controls ───────────────────────────────────────────────────────────
 
 .iv-controls {

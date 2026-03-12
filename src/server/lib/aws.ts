@@ -10,6 +10,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { CloudFrontClient } from '@aws-sdk/client-cloudfront';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { PollyClient } from '@aws-sdk/client-polly';
 
 const REGION = 'us-east-1';
 
@@ -22,3 +23,5 @@ export const cloudfront = new CloudFrontClient({ region: REGION });
 export const dynamo = DynamoDBDocumentClient.from(
   new DynamoDBClient({ region: REGION })
 );
+
+export const polly = new PollyClient({ region: REGION });

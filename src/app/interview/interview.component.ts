@@ -653,28 +653,45 @@ export class InterviewComponent implements OnDestroy {
 
   // ── Voice output ───────────────────────────────────────────────────────────
 
-  private speakText(text: string): Promise<void> {
+  private async speakText(text: string): Promise<void> {
+    this.isSpeaking.set(true);
+    try {
+      const response = await fetch(`${environment.apiUrl}/api/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) throw new Error('TTS API error');
+
+      const arrayBuffer = await response.arrayBuffer();
+      const audioContext = new AudioContext();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      await new Promise<void>((resolve) => {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.onended = () => { void audioContext.close(); resolve(); };
+        source.start();
+      });
+    } catch {
+      // Fallback to browser TTS if Polly is unavailable
+      await this._speakWithBrowser(text);
+    } finally {
+      this.isSpeaking.set(false);
+    }
+  }
+
+  private _speakWithBrowser(text: string): Promise<void> {
     return new Promise((resolve) => {
       const synth = window.speechSynthesis;
-      if (!synth) {
-        resolve();
-        return;
-      }
-
+      if (!synth) { resolve(); return; }
       synth.cancel();
       const utt = new SpeechSynthesisUtterance(text);
       utt.rate = 0.95;
-      utt.pitch = 1.0;
-      utt.volume = 1.0;
-      this.isSpeaking.set(true);
-      utt.onend = () => {
-        this.isSpeaking.set(false);
-        resolve();
-      };
-      utt.onerror = () => {
-        this.isSpeaking.set(false);
-        resolve();
-      };
+      utt.onend = () => resolve();
+      utt.onerror = () => resolve();
       synth.speak(utt);
     });
   }

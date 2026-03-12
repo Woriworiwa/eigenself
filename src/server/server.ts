@@ -25,6 +25,7 @@ import { letterRouter }     from './routes/letter';
 import { profileRouter }    from './routes/profile';
 import { transcribeRouter } from './routes/transcribe';
 import { testSuggestionsRouter } from './routes/test-suggestions';
+import { ttsRouter }             from './routes/tts';
 import { registerSonicHandlers } from './socket/sonic-handlers';
 import { NOVA_LITE_MODEL_ID, NOVA_SONIC_MODEL_ID } from './lib/models';
 
@@ -68,6 +69,7 @@ app.use('/api/generate-letter',    letterRouter);
 app.use('/api/publish-profile',    profileRouter);
 app.use('/api/transcribe',         transcribeRouter);
 app.use('/api/test-suggestions',   testSuggestionsRouter);
+app.use('/api/tts',                ttsRouter);
 
 // ── Global error handler ──────────────────────────────────────────────────────
 // Four-parameter signature is required for Express to treat this as an error handler.

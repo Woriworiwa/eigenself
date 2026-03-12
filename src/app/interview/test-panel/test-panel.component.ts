@@ -4,6 +4,7 @@ import {
   output,
   signal,
   effect,
+  OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { environment } from '../../../environments/environment';
@@ -205,7 +206,7 @@ const PERSONAS: Persona[] = [
     }
   `],
 })
-export class TestPanelComponent {
+export class TestPanelComponent implements OnInit {
   lastAgentMessage = input<string>('');
   isSpeaking = input<boolean>(false);
   suggestionPicked = output<string>();
@@ -216,20 +217,27 @@ export class TestPanelComponent {
   readonly loading = signal<boolean>(false);
   readonly error = signal<string>('');
 
-  private lastFetched = '';
-  private lastFetchedPersona = '';
+  // Incremented after each pick to force the effect to re-evaluate
+  private readonly _refetch = signal<number>(0);
 
   private readonly _fetchEffect = effect(() => {
     const msg = this.lastAgentMessage();
     const speaking = this.isSpeaking();
     const persona = this.selectedPersonaId();
+    this._refetch(); // tracked — changes after each pick
 
-    if (!speaking && msg && (msg !== this.lastFetched || persona !== this.lastFetchedPersona)) {
-      this.lastFetched = msg;
-      this.lastFetchedPersona = persona;
+    if (!speaking && msg) {
       void this.fetchSuggestions(msg, persona);
     }
   });
+
+  ngOnInit(): void {
+    // Ensure initial fetch if the AI has already spoken when test mode activates
+    const msg = this.lastAgentMessage();
+    if (msg && !this.isSpeaking()) {
+      void this.fetchSuggestions(msg, this.selectedPersonaId());
+    }
+  }
 
   onPersonaChange(event: Event): void {
     this.selectedPersonaId.set((event.target as HTMLSelectElement).value);
@@ -238,15 +246,14 @@ export class TestPanelComponent {
   pick(text: string): void {
     this.suggestionPicked.emit(text);
     this.suggestions.set([]);
-    this.lastFetched = '';
-    this.lastFetchedPersona = '';
+    this._refetch.update(n => n + 1);
   }
 
   private get selectedPersonaDescription(): string {
     return PERSONAS.find(p => p.id === this.selectedPersonaId())?.description ?? PERSONAS[0].description;
   }
 
-  private async fetchSuggestions(question: string, _personaId: string): Promise<void> {
+  private async fetchSuggestions(question: string, _persona: string): Promise<void> {
     this.loading.set(true);
     this.suggestions.set([]);
     this.error.set('');

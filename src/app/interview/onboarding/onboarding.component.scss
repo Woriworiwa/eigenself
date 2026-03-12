@@ -150,6 +150,68 @@
   animation: inlineIn 0.3s ease both;
 }
 
+// ─── Intro CTA ────────────────────────────────────────────────────────────────
+
+.ob-inline--cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ob-cta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.ob-cta-ready {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sp-3) var(--sp-7);
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--r-full);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: var(--ink-2); transform: translateX(2px); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+
+.ob-cta-expect {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.825rem;
+  color: var(--ink-4);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+
+  &:hover { color: var(--ink-2); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+
+.ob-expect-panel {
+  animation: expandDown 0.2s ease both;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--bg-warm);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.ob-expect-text {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--ink-3);
+  white-space: pre-line;
+}
+
 // ─── CV decision ──────────────────────────────────────────────────────────────
 
 .ob-cv-row {
@@ -182,6 +244,14 @@
   }
 
   &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  &--primary {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: transparent;
+
+    &:hover { background: var(--ink-2); }
+  }
 
   &--active {
     border-color: var(--accent-border);

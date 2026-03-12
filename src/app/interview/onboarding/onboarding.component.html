@@ -31,20 +31,43 @@
 
       }
 
-      <!-- ── Inline CV affordance — appears after agent asks ─────── -->
+      <!-- ── Intro CTA — I'm ready + What to expect ───────────────── -->
+      @if (step() === 'intro-cta' && !agentTyping()) {
+        <div class="ob-inline ob-inline--cta" #lastMsg>
+
+          <div class="ob-cta-row">
+            <button class="ob-cta-ready" type="button" (click)="ready()">
+              I'm ready
+            </button>
+            <button
+              class="ob-cta-expect"
+              type="button"
+              (click)="toggleWhatToExpect()"
+              [attr.aria-expanded]="whatToExpand()">
+              {{ whatToExpand() ? 'Got it ↑' : 'What should I expect?' }}
+            </button>
+          </div>
+
+          @if (whatToExpand()) {
+            <div class="ob-expect-panel">
+              <p class="ob-expect-text">{{ WHAT_TO_EXPECT }}</p>
+            </div>
+          }
+
+        </div>
+      }
+
+      <!-- ── CV context affordance ─────────────────────────────────── -->
       @if (step() === 'cv-decision' && !agentTyping()) {
         <div class="ob-inline ob-inline--cv" #lastMsg>
 
           @if (!cvFileName() && !cvPasteValue()) {
-
             <div class="ob-cv-row">
-
-              <!-- Upload -->
-              <label class="ob-cv-chip" for="cv-file-input" [class.ob-cv-chip--loading]="cvUploading()">
+              <label class="ob-cv-chip ob-cv-chip--primary" for="cv-file-input" [class.ob-cv-chip--loading]="cvUploading()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
                 </svg>
-                {{ cvUploading() ? 'Reading…' : 'Upload file' }}
+                {{ cvUploading() ? 'Reading…' : 'Upload a file' }}
                 <input
                   id="cv-file-input"
                   type="file"
@@ -54,40 +77,23 @@
                   class="ob-file-hidden"
                 />
               </label>
-
-              <!-- Paste toggle -->
-              <button
-                class="ob-cv-chip"
-                [class.ob-cv-chip--active]="cvPasteExpanded()"
-                type="button"
-                (click)="toggleCvPaste()"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2"/>
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                </svg>
+              <button class="ob-cv-chip" [class.ob-cv-chip--active]="cvPasteExpanded()" type="button" (click)="toggleCvPaste()">
                 Paste text
               </button>
-
-              <!-- Skip -->
               <button class="ob-cv-chip ob-cv-chip--skip" type="button" (click)="skipCv()">
                 Skip for now
               </button>
-
             </div>
-
             @if (cvError()) {
               <p class="ob-cv-error" role="alert">{{ cvError() }}</p>
             }
-
           }
 
-          <!-- Paste area — outside the !cvPasteValue() guard so typing doesn't destroy it -->
           @if (cvPasteExpanded() && !cvFileName()) {
             <div class="ob-paste-area">
               <textarea
                 class="ob-paste-textarea"
-                placeholder="Paste anything — CV, transcript, cover letter…"
+                placeholder="Paste anything — CV, transcript, notes…"
                 [value]="cvPasteValue()"
                 (input)="onCvPasteInput($event)"
                 rows="7"
@@ -106,8 +112,6 @@
           }
 
           @if (cvFileName()) {
-
-            <!-- File uploaded — confirm or remove -->
             <div class="ob-cv-loaded">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -116,88 +120,40 @@
               <button class="ob-cv-loaded__remove" type="button" (click)="removeCv()" aria-label="Remove">✕</button>
             </div>
             <div class="ob-cv-loaded-actions">
-              <button class="ob-cv-chip ob-cv-chip--confirm" type="button" (click)="confirmCvFile()">
-                Use this →
-              </button>
+              <button class="ob-cv-chip ob-cv-chip--confirm" type="button" (click)="confirmCvFile()">Use this →</button>
               <button class="ob-cv-chip ob-cv-chip--skip" type="button" (click)="skipCv()">Skip</button>
             </div>
-
           }
 
         </div>
       }
 
-      <!-- ── Inline mode choice — appears after agent asks ────────── -->
+      <!-- ── Mode selection ─────────────────────────────────────────── -->
       @if (step() === 'mode-decision' && !agentTyping()) {
         <div class="ob-inline ob-inline--mode" #lastMsg>
-
           @if (supportsSonic()) {
-            <button
-              class="ob-mode-reply ob-mode-reply--voice"
-              type="button"
-              (click)="selectMode('sonic')"
-            >
+            <button class="ob-mode-reply ob-mode-reply--voice" type="button" (click)="selectMode('sonic')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                 <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
                 <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
               </svg>
               I'll speak
-              <span class="ob-mode-reply__sub">Nova 2 Sonic · real-time voice</span>
+              <span class="ob-mode-reply__sub">Real-time voice</span>
             </button>
           }
-
-          <button
-            class="ob-mode-reply ob-mode-reply--text"
-            type="button"
-            (click)="selectMode('text')"
-          >
+          <button class="ob-mode-reply ob-mode-reply--text" type="button" (click)="selectMode('text')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
               <polyline points="4 7 4 4 20 4 20 7"/>
               <line x1="9" y1="20" x2="15" y2="20"/>
               <line x1="12" y1="4" x2="12" y2="20"/>
             </svg>
             I'll type
-            <span class="ob-mode-reply__sub">At my own pace</span>
+            <span class="ob-mode-reply__sub">Type at your own pace</span>
           </button>
-
         </div>
       }
 
     </div>
   </div>
-
-  <!-- ── Input bar — visible until mode is chosen ─────────────────── -->
-  @if (step() !== 'mode-decision' && step() !== 'cv-decision') {
-    <div class="ob-input-bar">
-      <div class="ob-input-row">
-        <label for="ob-input" class="visually-hidden">Your reply</label>
-        <input
-          id="ob-input"
-          class="ob-input"
-          type="text"
-          [value]="inputValue()"
-          (input)="onInputChange($event)"
-          (keydown)="onKeydown($event)"
-          [disabled]="agentTyping()"
-          placeholder="Write here…"
-          autocomplete="off"
-          #nameInput
-        />
-        <button
-          class="ob-send"
-          type="button"
-          (click)="submitInput()"
-          [disabled]="agentTyping() || !inputValue().trim()"
-          aria-label="Send"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-        </button>
-      </div>
-      <p class="ob-input-hint">Press Enter to send</p>
-    </div>
-  }
 
 </div>

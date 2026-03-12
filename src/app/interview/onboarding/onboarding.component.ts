@@ -16,19 +16,18 @@ import { InterviewMode } from '../interview.types';
 interface ObMessage {
   role: 'agent' | 'user';
   text: string;
-  isTyping?: boolean;        // show the typing dots instead of text
+  isTyping?: boolean;
 }
 
 type ObStep =
-  | 'agent-intro'            // agent's opening message visible, user hasn't replied yet
-  | 'user-replied'           // user sent their first reply
-  | 'agent-cv-ask'           // agent asked about CV
-  | 'cv-decision'            // user is deciding (upload / paste / skip shown inline)
-  | 'agent-mode-ask'         // agent asked how they want to talk
-  | 'mode-decision';         // mode buttons shown — final step before handoff
+  | 'intro-cta'        // intro visible, showing "I'm ready" + "What to expect" buttons
+  | 'cv-decision'      // agent asked for context, inline affordances shown
+  | 'agent-mode-ask'   // agent asked how they want to talk
+  | 'mode-decision';   // mode buttons shown — final step before handoff
 
 @Component({
   selector: 'app-onboarding',
+  standalone: true,
   templateUrl: './onboarding.component.html',
   styleUrl: './onboarding.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,56 +35,51 @@ type ObStep =
 export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChecked {
 
   // ── Inputs ────────────────────────────────────────────────────────────────
-
-  cvText     = input<string>('');
-  cvFileName = input<string>('');
+  cvText      = input<string>('');
+  cvFileName  = input<string>('');
   cvUploading = input<boolean>(false);
-  cvError    = input<string>('');
+  cvError     = input<string>('');
   supportsSonic = input<boolean>(false);
 
   // ── Outputs ───────────────────────────────────────────────────────────────
+  modeSelected  = output<InterviewMode>();
+  cvFileChanged = output<Event>();
+  cvRemoved     = output<void>();
+  cvPasted      = output<string>();
 
-  modeSelected   = output<InterviewMode>();
-  cvFileChanged  = output<Event>();
-  cvRemoved      = output<void>();
-  cvPasted       = output<string>();
-
-  // ── Conversation state ────────────────────────────────────────────────────
-
-  messages   = signal<ObMessage[]>([]);
-  step       = signal<ObStep>('agent-intro');
-  inputValue = signal<string>('');
-  agentTyping = signal<boolean>(false);
-
+  // ── State ─────────────────────────────────────────────────────────────────
+  messages        = signal<ObMessage[]>([]);
+  step            = signal<ObStep>('intro-cta');
+  agentTyping     = signal<boolean>(false);
+  whatToExpand    = signal<boolean>(false);
   cvPasteExpanded = signal<boolean>(false);
   cvPasteValue    = signal<string>('');
 
   private conversationEl = viewChild<ElementRef<HTMLElement>>('conversationEl');
-  private lastMsgEls = viewChildren<ElementRef<HTMLElement>>('lastMsg');
-  private nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
-  private shouldScroll = false;
+  private lastMsgEls     = viewChildren<ElementRef<HTMLElement>>('lastMsg');
+  private shouldScroll   = false;
 
   // ── Static copy ───────────────────────────────────────────────────────────
 
-  private readonly INTRO_MSG =
-    `Before we start — a quick word about what this is.\n\nI'm not going to ask you to list your skills or summarise your experience. I've read enough CVs. I'm more interested in how you actually think, what lights you up, and what makes you different from everyone with the same job title.\n\nThis will take around 15 minutes. No script, no right answers.\n\nWhat's your name?`;
+  readonly INTRO_MSG =
+    `Take a breath.\n\nThis conversation will be about you.\nI'll carry it — you just show up and talk.\n\nWe'll cover how you think, what drives you, where you draw the line, and what makes you different from everyone with the same job title.\n\nIt usually takes around 20 minutes. You can end it whenever you feel ready — there's a button, or just tell me you're done.`;
+
+  readonly WHAT_TO_EXPECT =
+    `Here's what happens:\n\n1. We'll have a conversation — I ask, you answer. No script, no right answers.\n2. You can upload or paste some context before we start if you want — a CV, notes, anything. Entirely optional.\n3. When you're ready to stop, say so or hit the end button. I'll then turn everything we talked about into a structured document that captures who you are.\n\nThat's it.`;
 
   private readonly CV_ASK_MSG =
-    `Good to meet you. Do you have anything you'd like me to read before we start? A CV, a cover letter, a previous session transcript, or anything else that gives me context. I'll use it to skip the obvious and focus on what it can't tell me. Entirely optional — we can also just talk.`;
+    `Before we start — you can share some context if you'd like. A CV, a cover letter, notes, or even a previous conversation with Eigenself.\n\nSharing something helps me skip the obvious questions and spend the time on what really matters — the things no document can tell me.\n\nEntirely optional.`;
 
   private readonly MODE_ASK_MSG =
-    `One last thing — how would you like to do this? You can speak and I'll listen in real time, or type if you'd rather go at your own pace. You can switch any time.`;
+    `One last thing — how would you like to talk?`;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
-    // Show the opening message immediately — no delay, no stagger
     this.messages.set([{ role: 'agent', text: this.INTRO_MSG }]);
   }
 
-  ngAfterViewInit(): void {
-    this.nameInput()?.nativeElement.focus();
-  }
+  ngAfterViewInit(): void {}
 
   ngAfterViewChecked(): void {
     if (this.shouldScroll) {
@@ -95,49 +89,27 @@ export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChec
   }
 
   private scrollToLastMessage(): void {
-    const els = this.lastMsgEls();
+    const els  = this.lastMsgEls();
     const last = els[els.length - 1]?.nativeElement;
-    if (last) {
-      last.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
+    if (last) last.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
-  // ── Input handling ────────────────────────────────────────────────────────
+  // ── CTA actions ───────────────────────────────────────────────────────────
 
-  onInputChange(event: Event): void {
-    this.inputValue.set((event.target as HTMLInputElement).value);
+  toggleWhatToExpect(): void {
+    this.whatToExpand.set(!this.whatToExpand());
+    this.shouldScroll = true;
   }
 
-  onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.submitInput();
-    }
-  }
-
-  submitInput(): void {
-    const text = this.inputValue().trim();
-    if (!text || this.agentTyping()) return;
-
-    this.addUserMessage(text);
-    this.inputValue.set('');
-
-    const current = this.step();
-
-    if (current === 'agent-intro') {
-      // User gave their name / replied to intro → ask about CV
-      this.step.set('user-replied');
-      this.showAgentMessage(this.CV_ASK_MSG, 'cv-decision');
-    } else if (current === 'cv-decision') {
-      // User typed something (e.g. "no thanks") → treat as skip, go to mode
-      this.showAgentMessage(this.MODE_ASK_MSG, 'mode-decision');
-    }
+  ready(): void {
+    this.addUserMessage("I'm ready.");
+    this.showAgentMessage(this.CV_ASK_MSG, 'cv-decision');
   }
 
   // ── CV decisions ──────────────────────────────────────────────────────────
 
   skipCv(): void {
-    this.addUserMessage('No CV — let\'s just talk.');
+    this.addUserMessage("No context — let's just talk.");
     this.cvRemoved.emit();
     this.showAgentMessage(this.MODE_ASK_MSG, 'mode-decision');
   }
@@ -156,7 +128,7 @@ export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChec
     const text = this.cvPasteValue().trim();
     if (!text) return;
     this.cvPasted.emit(text);
-    this.addUserMessage('Here\'s some context — I\'ve pasted it in.');
+    this.addUserMessage("Here's some context — I've pasted it in.");
     this.cvPasteExpanded.set(false);
     this.showAgentMessage(this.MODE_ASK_MSG, 'mode-decision');
   }
@@ -164,12 +136,6 @@ export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChec
   clearCvPaste(): void {
     this.cvPasteValue.set('');
     this.cvPasted.emit('');
-  }
-
-  // Called by parent when file upload completes (cvFileName input changes)
-  onCvUploaded(): void {
-    // The parent will update cvFileName — we just need to advance the step
-    // We watch for cvFileName to become non-empty in the template with @if
   }
 
   confirmCvFile(): void {
@@ -189,9 +155,8 @@ export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChec
   // ── Mode selection ────────────────────────────────────────────────────────
 
   selectMode(mode: InterviewMode): void {
-    const label = mode === 'sonic' ? 'I\'ll speak.' : 'I\'ll type.';
+    const label = mode === 'sonic' ? "I'll speak." : "I'll type.";
     this.addUserMessage(label);
-    // Small delay so user sees their "reply" before handoff
     setTimeout(() => this.modeSelected.emit(mode), 400);
   }
 
@@ -210,15 +175,12 @@ export class OnboardingComponent implements OnInit, AfterViewInit, AfterViewChec
     setTimeout(() => {
       this.messages.update(msgs =>
         msgs.map((m, i) =>
-          i === msgs.length - 1 && m.isTyping
-            ? { role: 'agent', text }
-            : m
+          i === msgs.length - 1 && m.isTyping ? { role: 'agent', text } : m
         )
       );
       this.agentTyping.set(false);
       this.step.set(nextStep);
       this.shouldScroll = true;
-      // second tick: inline affordance block will have rendered by now
       setTimeout(() => this.scrollToLastMessage(), 50);
     }, 900);
   }

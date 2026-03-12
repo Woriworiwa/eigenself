@@ -15,27 +15,42 @@
     }
 
     @case ('interview') {
-      <app-interview-state
-        [messages]="messages()"
-        [agentTyping]="agentTyping()"
-        [interviewMode]="interviewMode()"
-        [isRecording]="isRecording()"
-        [isSonicSpeaking]="isSonicSpeaking()"
-        [isSonicListening]="isSonicListening()"
-        [voiceTranscript]="voiceTranscript()"
-        [conversationComplete]="conversationComplete()"
-        [currentTextInput]="currentTextInput()"
-        [isPaused]="sonicPaused()"
-        [useAgent]="useAgent()"
-        (endInterview)="transitionToProcessing()"
-        (micClicked)="onMicClicked()"
-        (pauseClicked)="onPauseClicked()"
-        (textChanged)="currentTextInput.set($event)"
-        (textKeydown)="handleTextKeydown($event)"
-        (textSubmit)="submitTextAnswer()"
-        (sonicTextSubmit)="sendSonicText()"
-        (modeToggled)="interviewMode.set(interviewMode() === 'text' ? 'sonic' : 'text')"
-        (agentToggled)="useAgent.set(!useAgent())" />
+      <div class="interview-wrapper">
+        <app-interview-state
+          [messages]="messages()"
+          [agentTyping]="agentTyping()"
+          [interviewMode]="interviewMode()"
+          [isRecording]="isRecording()"
+          [isSonicSpeaking]="isSonicSpeaking()"
+          [isSonicListening]="isSonicListening()"
+          [voiceTranscript]="voiceTranscript()"
+          [conversationComplete]="conversationComplete()"
+          [currentTextInput]="currentTextInput()"
+          [isPaused]="sonicPaused()"
+          [useAgent]="useAgent()"
+          (endInterview)="transitionToProcessing()"
+          (micClicked)="onMicClicked()"
+          (pauseClicked)="onPauseClicked()"
+          (textChanged)="currentTextInput.set($event)"
+          (textKeydown)="handleTextKeydown($event)"
+          (textSubmit)="submitTextAnswer()"
+          (sonicTextSubmit)="sendSonicText()"
+          (modeToggled)="interviewMode.set(interviewMode() === 'text' ? 'sonic' : 'text')"
+          (agentToggled)="useAgent.set(!useAgent())" />
+        @if (testMode()) {
+          <app-test-panel
+            [lastAgentMessage]="lastAgentMessage()"
+            [isSpeaking]="agentTyping() || isSonicSpeaking()"
+            (suggestionPicked)="onSuggestionPicked($event)" />
+        }
+      </div>
+      <button
+        class="test-mode-toggle"
+        type="button"
+        [attr.aria-pressed]="testMode()"
+        (click)="testMode.set(!testMode())">
+        {{ testMode() ? '× test' : 'test' }}
+      </button>
     }
 
     @case ('processing') {

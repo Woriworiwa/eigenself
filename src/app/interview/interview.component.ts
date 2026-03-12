@@ -16,13 +16,14 @@ import { OnboardingComponent } from './onboarding/onboarding.component';
 import { InterviewStateComponent } from './interview-state/interview-state.component';
 import { ProcessingComponent } from './processing/processing.component';
 import { RevealComponent } from './reveal/reveal.component';
+import { TestPanelComponent } from './test-panel/test-panel.component';
 
 @Component({
   selector: 'app-interview',
   templateUrl: './interview.component.html',
   styleUrl: './interview.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [OnboardingComponent, InterviewStateComponent, ProcessingComponent, RevealComponent],
+  imports: [OnboardingComponent, InterviewStateComponent, ProcessingComponent, RevealComponent, TestPanelComponent],
 })
 export class InterviewComponent implements OnDestroy {
   private _destroyRef = inject(DestroyRef);
@@ -63,6 +64,7 @@ export class InterviewComponent implements OnDestroy {
   // ── UI state ───────────────────────────────────────────────────────────────
 
   copyConfirmation = signal<string>('');
+  testMode = signal<boolean>(false);
   isSpeaking = signal<boolean>(false);
   currentTextInput = signal<string>('');
 
@@ -145,6 +147,14 @@ export class InterviewComponent implements OnDestroy {
   profileUrlCopied = signal<boolean>(false);
 
   // ── Derived state ──────────────────────────────────────────────────────────
+
+  readonly lastAgentMessage = computed(() => {
+    const msgs = this.messages();
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].role === 'agent') return msgs[i].text;
+    }
+    return '';
+  });
 
   progressPercent = computed(() => {
     const signals = this.protocolSignals();
@@ -253,6 +263,15 @@ export class InterviewComponent implements OnDestroy {
     if (!text) return;
     this.sonicService.sendText(text);
     this.currentTextInput.set('');
+  }
+
+  onSuggestionPicked(text: string): void {
+    if (this.interviewMode() === 'sonic') {
+      this.sonicService.sendText(text);
+      void this.speakText(text);
+    } else {
+      void this.handleUserMessage(text);
+    }
   }
 
   async startInterview(): Promise<void> {

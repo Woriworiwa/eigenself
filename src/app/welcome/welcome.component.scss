@@ -146,7 +146,7 @@
   width: 100%;
 }
 
-// ─── ELI5 ────────────────────────────────────────────────────────────────────
+// ─── ELI5 + Etymology ────────────────────────────────────────────────────────
 
 .w-eli5 {
   border-top: 1px solid var(--line-soft);
@@ -156,8 +156,19 @@
 }
 
 .w-eli5-inner {
-  max-width: 1020px;
+  max-width: 1200px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  gap: var(--sp-8);
+  align-items: stretch;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.w-eli5-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-4);
@@ -204,17 +215,38 @@
 }
 
 .w-problem-inner {
-  max-width: 1020px;
+  max-width: 680px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-16);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
 
-  @media (max-width: 780px) {
-    grid-template-columns: 1fr;
-    gap: var(--sp-10);
-  }
+// ─── Etymology standalone section ─────────────────────────────────────────────
+
+.w-etymology-section {
+  display: none; // merged into ELI5 section
+}
+
+.w-etymology {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+  height: 100%;
+}
+
+.w-etymology-parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .w-problem-copy {
@@ -223,7 +255,7 @@
   gap: var(--sp-5);
 }
 
-.w-problem-title {
+.w-problem-copy {
   font-family: var(--font-display);
   font-size: clamp(1.2rem, 2.2vw, 1.45rem);
   font-weight: 500;
@@ -252,10 +284,11 @@
 
 .w-etymology-word {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.03em;
+  text-align: left;
 }
 
 .w-etymology-eigen {
@@ -271,7 +304,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  padding: var(--sp-5) 0;
+  padding: var(--sp-4) 0;
   border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
 }

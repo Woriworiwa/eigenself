@@ -269,13 +269,15 @@ export class InterviewComponent implements OnDestroy {
 
   async onSuggestionPicked(text: string): Promise<void> {
     if (this.interviewMode() === 'sonic') {
-      // Stop mic before playing TTS — prevents Sonic from hearing the speaker output
       this.testSpeaking.set(true);
       await this.sonicService.stopListening();
-      this.sonicService.sendText(text);
+      // Show the message in the transcript immediately (while TTS is playing)
+      this.sonicService.addUserMessage(text);
+      // Play TTS — Sonic only gets the signal after speech finishes
       await this.speakText(text);
+      // Now send to Sonic, emulating the user having just finished speaking
+      this.sonicService.emitText(text);
       this.testSpeaking.set(false);
-      // Restart mic (unless the user has manually muted)
       if (!this.sonicUserPaused()) {
         await this.sonicService.startListening();
       }

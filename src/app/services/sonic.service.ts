@@ -208,11 +208,20 @@ export class SonicService implements OnDestroy {
     this.listening.set(false);
   }
 
+  addUserMessage(text: string): void {
+    this.fullTranscript.update(t => [...t, { role: 'user', text }]);
+  }
+
   sendText(text: string): void {
     if (!this.socket?.connected || !this.sessionReady()) return;
-    // Add to transcript immediately so the message appears in the UI and the
-    // next AI response starts a new entry instead of appending to the previous one.
-    this.fullTranscript.update(t => [...t, { role: 'user', text }]);
+    this.addUserMessage(text);
+    this.socket.emit('sonic:text', { text });
+  }
+
+  // Emits to Sonic without adding to transcript — use when transcript was
+  // already updated via addUserMessage() before the socket event should fire.
+  emitText(text: string): void {
+    if (!this.socket?.connected || !this.sessionReady()) return;
     this.socket.emit('sonic:text', { text });
   }
 

@@ -92,6 +92,7 @@ export class InterviewComponent implements OnDestroy {
   readonly isSonicListening = computed(() => this.sonicService.listening());
   readonly supportsSonic = signal<boolean>(this._checkSonicSupport());
   private readonly sonicUserPaused = signal<boolean>(false);
+  private readonly testSpeaking = signal<boolean>(false);
   readonly sonicPaused = computed(() =>
     this.interviewMode() === 'sonic' && this.sonicUserPaused(),
   );
@@ -118,6 +119,7 @@ export class InterviewComponent implements OnDestroy {
     if (this.interviewMode() !== 'sonic') return;
     if (!this.sonicService.sessionReady() || this.sonicService.listening()) return;
     if (this.sonicUserPaused()) return;
+    if (this.testSpeaking()) return; // mic stays off while test TTS is playing
 
     if (!this._sonicOpeningPromptSent) {
       this._sonicOpeningPromptSent = true;
@@ -265,10 +267,18 @@ export class InterviewComponent implements OnDestroy {
     this.currentTextInput.set('');
   }
 
-  onSuggestionPicked(text: string): void {
+  async onSuggestionPicked(text: string): Promise<void> {
     if (this.interviewMode() === 'sonic') {
+      // Stop mic before playing TTS — prevents Sonic from hearing the speaker output
+      this.testSpeaking.set(true);
+      await this.sonicService.stopListening();
       this.sonicService.sendText(text);
-      void this.speakText(text);
+      await this.speakText(text);
+      this.testSpeaking.set(false);
+      // Restart mic (unless the user has manually muted)
+      if (!this.sonicUserPaused()) {
+        await this.sonicService.startListening();
+      }
     } else {
       void this.handleUserMessage(text);
     }

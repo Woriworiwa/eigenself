@@ -13,28 +13,30 @@ interface Persona {
   id: string;
   label: string;
   description: string;
+  requiresCv?: boolean;
 }
 
 const PERSONAS: Persona[] = [
   {
-    id: 'engineer',
-    label: 'Senior Engineer',
-    description: 'Thoughtful and slightly guarded. Values precision. Gives measured, caveat-heavy answers. Uses phrases like "it depends" and "in practice". Dislikes vague questions.',
+    id: 'same',
+    label: 'Same person (CV)',
+    description: '',
+    requiresCv: true,
   },
   {
-    id: 'designer',
-    label: 'UX Designer',
-    description: 'Enthusiastic and collaborative. Centers everything on users and empathy. Uses phrases like "the experience" and "friction". Tells stories about research.',
+    id: 'stupid',
+    label: 'Stupid person',
+    description: 'You struggle to understand questions and give shallow, confused, or off-topic answers. You miss the point, state obvious things, misinterpret what is being asked, and generally come across as not very bright. Keep answers short and a bit muddled.',
   },
   {
-    id: 'exec',
-    label: 'Executive',
-    description: 'Brief and outcome-focused. Thinks in terms of business impact. Dislikes getting into technical details. Short, confident answers.',
+    id: 'communicator',
+    label: 'Poor communicator',
+    description: 'You have thoughts but cannot express them clearly. You ramble, use wrong words, start sentences and trail off, repeat yourself, and make it genuinely hard to follow what you mean. You are not stupid — just unable to articulate.',
   },
   {
-    id: 'founder',
-    label: 'Startup Founder',
-    description: 'High energy and opinionated. Moves fast. Jumps between topics. Passionate about the mission. Slightly scattered but charismatic.',
+    id: 'filler',
+    label: 'Filler word speaker',
+    description: 'You speak with constant filler words and hesitations. Sprinkle "umm", "uhh", "like", "you know", "I mean", "sort of", "kind of", "ahh", "uh", "right" and "basically" throughout every response. It should feel natural but very hesitant and pause-heavy.',
   },
 ];
 
@@ -52,7 +54,9 @@ const PERSONAS: Persona[] = [
           aria-label="Select test persona"
         >
           @for (p of personas; track p.id) {
-            <option [value]="p.id">{{ p.label }}</option>
+            <option [value]="p.id" [disabled]="p.requiresCv && !cvText()">
+              {{ p.label }}{{ p.requiresCv && !cvText() ? ' (no CV)' : '' }}
+            </option>
           }
         </select>
       </div>
@@ -209,6 +213,7 @@ const PERSONAS: Persona[] = [
 export class TestPanelComponent implements OnInit {
   lastAgentMessage = input<string>('');
   isSpeaking = input<boolean>(false);
+  cvText = input<string>('');
   suggestionPicked = output<string>();
 
   readonly personas = PERSONAS;
@@ -249,11 +254,19 @@ export class TestPanelComponent implements OnInit {
     this._refetch.update(n => n + 1);
   }
 
-  private get selectedPersonaDescription(): string {
-    return PERSONAS.find(p => p.id === this.selectedPersonaId())?.description ?? PERSONAS[0].description;
+  private get selectedPersona(): Persona {
+    return PERSONAS.find(p => p.id === this.selectedPersonaId()) ?? PERSONAS[0];
   }
 
   private async fetchSuggestions(question: string, _persona: string): Promise<void> {
+    const persona = this.selectedPersona;
+
+    // "Same person" requires a CV — show a hint if none is uploaded
+    if (persona.requiresCv && !this.cvText()) {
+      this.error.set('Upload a CV first to use this persona.');
+      return;
+    }
+
     this.loading.set(true);
     this.suggestions.set([]);
     this.error.set('');
@@ -264,7 +277,9 @@ export class TestPanelComponent implements OnInit {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question,
-          persona: this.selectedPersonaDescription,
+          personaId: persona.id,
+          persona: persona.description,
+          cvText: persona.requiresCv ? this.cvText() : undefined,
         }),
       });
 

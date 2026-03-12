@@ -41,6 +41,7 @@
           <app-test-panel
             [lastAgentMessage]="lastAgentMessage()"
             [isSpeaking]="agentTyping() || isSonicSpeaking()"
+            [cvText]="cvText()"
             (suggestionPicked)="onSuggestionPicked($event)" />
         }
       </div>

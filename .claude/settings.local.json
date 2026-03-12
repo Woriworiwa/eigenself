@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx nx@latest:*)",
+      "Bash(npx nx:*)",
+      "Bash(git:*)",
+      "Bash(test:*)",
+      "Bash(npm install:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx tsc:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(sed:*)",
+      "WebSearch"
+    ]
+  }
+}

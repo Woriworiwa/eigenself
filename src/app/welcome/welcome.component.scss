@@ -146,6 +146,55 @@
   width: 100%;
 }
 
+// ─── ELI5 ────────────────────────────────────────────────────────────────────
+
+.w-eli5 {
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--bg-warm);
+  padding: var(--sp-10) var(--sp-8);
+}
+
+.w-eli5-inner {
+  max-width: 1020px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+
+  @media (max-width: 780px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.w-eli5-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.w-eli5-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.w-eli5-text {
+  font-size: 0.9rem;
+  line-height: 1.72;
+  color: var(--ink-2);
+}
+
 // ─── Problem section ──────────────────────────────────────────────────────────
 
 .w-problem {
@@ -381,6 +430,22 @@
   font-size: 0.925rem;
   line-height: 1.75;
   color: var(--ink-3);
+}
+
+.w-how-body {
+  font-size: 0.925rem;
+  line-height: 1.75;
+  color: var(--ink-3);
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.82em;
+    background: var(--bg-inset);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    border-radius: var(--r-sm);
+    color: var(--ink-2);
+  }
 }
 
 .w-how-note {

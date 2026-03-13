@@ -3,48 +3,33 @@
   <!-- ── Two-column layout ────────────────────────────────────────────── -->
   <main class="main-layout">
 
-    <!-- Left: document -->
-    <div class="doc-col">
-      <div class="doc-header">
-        <h1 class="doc-title">Your identity document is ready.</h1>
-        <div class="doc-actions" role="toolbar" aria-label="Document actions">
-          @if (copyConfirmation()) {
-            <span class="bar-confirmation" role="status" aria-live="polite">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              {{ copyConfirmation() }}
-            </span>
-          }
-          <button class="bar-btn bar-btn--ghost" type="button" (click)="downloadDocumentClicked.emit()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Download
-          </button>
-          <button class="bar-btn bar-btn--primary" type="button" (click)="copyDocumentClicked.emit()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <rect x="9" y="9" width="13" height="13" rx="2"/>
-              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-            </svg>
-            Copy
-          </button>
-        </div>
-      </div>
-      <pre class="document-pre">{{ identityDoc()?.raw }}</pre>
-    </div>
-
-    <!-- Right: accordion -->
+    <!-- Left: hero + accordion -->
     <div class="tools-col">
-      <div class="tools-intro">
-        <p class="tools-label">What can you do with this?</p>
-        <p class="tools-desc">Your protocol is live. There are many ways to use it — send it to an employer, feed it to an AI, publish it as a page. Here are a few places to start.</p>
-      </div>
+
+      <!-- Hero -->
+      <header class="reveal-hero">
+        <span class="hero-badge">
+          <span class="hero-badge__dot" aria-hidden="true"></span>
+          Interview complete
+        </span>
+        <h1 class="hero-headline">
+          @if (identityDoc()?.name) {
+            {{ identityDoc()!.name }}'s identity protocol.
+          } @else {
+            Your identity protocol is ready.
+          }
+        </h1>
+        <p class="hero-body">
+          Copy it from the right panel and paste it as a system prompt into ChatGPT, Claude, or any AI tool —
+          it will know how you think, how you communicate, and what drives you.
+          Use the tools below to check fit against a job description, generate a cover letter in your voice,
+          or publish a shareable profile page.
+        </p>
+      </header>
 
       <div class="accordion">
 
-        <!-- 0 · Evaluate fit -->
+        <!-- 0 · Create an online profile page -->
         <div class="accordion-item">
           <button
             class="accordion-trigger"
@@ -53,8 +38,7 @@
             aria-controls="acc-panel-0"
             (click)="toggleAccordion(0)">
             <span class="accordion-trigger__text">
-              <span class="accordion-trigger__title">Evaluate fit</span>
-              <span class="agent-badge">AI agent</span>
+              <span class="accordion-trigger__title">Create an online profile page</span>
             </span>
             <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 0"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -63,122 +47,6 @@
           </button>
           <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 0"
             id="acc-panel-0" role="region">
-            <div class="accordion-body">
-              <p class="tool-desc">
-                Paste a job description. Get an honest fit report — what aligns,
-                what doesn't, deal-breakers triggered, and what to lead with.
-              </p>
-              <textarea
-                class="use-textarea"
-                placeholder="Paste the job description here…"
-                [value]="jobPostForEval()"
-                (input)="jobPostForEval.set($any($event.target).value)"
-                rows="5"
-                aria-label="Job description for fit evaluation">
-              </textarea>
-              <button
-                class="use-action-btn use-action-btn--primary"
-                type="button"
-                (click)="evaluateFit()"
-                [disabled]="evalLoading() || !jobPostForEval().trim()">
-                @if (evalLoading()) { Evaluating… } @else { Evaluate fit }
-              </button>
-              @if (evalError()) {
-                <p class="use-error-text" role="alert">{{ evalError() }}</p>
-              }
-              @if (evalResult()) {
-                <div class="use-result-panel">
-                  <div class="use-result-header">
-                    <span>Fit report</span>
-                    <button class="result-copy-btn" type="button" (click)="copyResult(evalResult(), evalCopied)">
-                      {{ evalCopied() ? '✓ Copied' : 'Copy' }}
-                    </button>
-                  </div>
-                  <pre class="use-result-pre">{{ evalResult() }}</pre>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        <!-- 1 · Write a cover letter -->
-        <div class="accordion-item">
-          <button
-            class="accordion-trigger"
-            type="button"
-            [attr.aria-expanded]="openAccordionIndex() === 1"
-            aria-controls="acc-panel-1"
-            (click)="toggleAccordion(1)">
-
-            <span class="accordion-trigger__text">
-              <span class="accordion-trigger__title">Write a cover letter</span>
-              <span class="agent-badge">AI agent</span>
-            </span>
-            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 1"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 1"
-            id="acc-panel-1" role="region">
-            <div class="accordion-body">
-              <p class="tool-desc">
-                Paste a job description. Get a letter written in your actual voice —
-                your phrases, your tone, your style. Not a template.
-              </p>
-              <textarea
-                class="use-textarea"
-                placeholder="Paste the job description here…"
-                [value]="jobPostForLetter()"
-                (input)="jobPostForLetter.set($any($event.target).value)"
-                rows="5"
-                aria-label="Job description for cover letter">
-              </textarea>
-              <button
-                class="use-action-btn use-action-btn--primary"
-                type="button"
-                (click)="generateLetter()"
-                [disabled]="letterLoading() || !jobPostForLetter().trim()">
-                @if (letterLoading()) { Writing… } @else { Write cover letter }
-              </button>
-              @if (letterError()) {
-                <p class="use-error-text" role="alert">{{ letterError() }}</p>
-              }
-              @if (letterResult()) {
-                <div class="use-result-panel">
-                  <div class="use-result-header">
-                    <span>Cover letter</span>
-                    <button class="result-copy-btn" type="button" (click)="copyResult(letterResult(), letterCopied)">
-                      {{ letterCopied() ? '✓ Copied' : 'Copy' }}
-                    </button>
-                  </div>
-                  <pre class="use-result-pre">{{ letterResult() }}</pre>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        <!-- 2 · Share a profile -->
-        <div class="accordion-item">
-          <button
-            class="accordion-trigger"
-            type="button"
-            [attr.aria-expanded]="openAccordionIndex() === 2"
-            aria-controls="acc-panel-2"
-            (click)="toggleAccordion(2)">
-
-            <span class="accordion-trigger__text">
-              <span class="accordion-trigger__title">Share a profile</span>
-              <span class="agent-badge">AI agent</span>
-            </span>
-            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 2"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 2"
-            id="acc-panel-2" role="region">
             <div class="accordion-body">
               <p class="tool-desc">
                 We'll generate a designed web page from your document and host it —
@@ -224,6 +92,120 @@
           </div>
         </div>
 
+        <!-- 1 · Evaluate fit -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 1"
+            aria-controls="acc-panel-1"
+            (click)="toggleAccordion(1)">
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Evaluate fit</span>
+              <span class="agent-badge">AI agent</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 1"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 1"
+            id="acc-panel-1" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                Paste a job description. Get an honest fit report — what aligns,
+                what doesn't, deal-breakers triggered, and what to lead with.
+              </p>
+              <textarea
+                class="use-textarea"
+                placeholder="Paste the job description here…"
+                [value]="jobPostForEval()"
+                (input)="jobPostForEval.set($any($event.target).value)"
+                rows="5"
+                aria-label="Job description for fit evaluation">
+              </textarea>
+              <button
+                class="use-action-btn use-action-btn--primary"
+                type="button"
+                (click)="evaluateFit()"
+                [disabled]="evalLoading() || !jobPostForEval().trim()">
+                @if (evalLoading()) { Evaluating… } @else { Evaluate fit }
+              </button>
+              @if (evalError()) {
+                <p class="use-error-text" role="alert">{{ evalError() }}</p>
+              }
+              @if (evalResult()) {
+                <div class="use-result-panel">
+                  <div class="use-result-header">
+                    <span>Fit report</span>
+                    <button class="result-copy-btn" type="button" (click)="copyResult(evalResult(), evalCopied)">
+                      {{ evalCopied() ? '✓ Copied' : 'Copy' }}
+                    </button>
+                  </div>
+                  <pre class="use-result-pre">{{ evalResult() }}</pre>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 · Write a cover letter -->
+        <div class="accordion-item">
+          <button
+            class="accordion-trigger"
+            type="button"
+            [attr.aria-expanded]="openAccordionIndex() === 2"
+            aria-controls="acc-panel-2"
+            (click)="toggleAccordion(2)">
+            <span class="accordion-trigger__text">
+              <span class="accordion-trigger__title">Write a cover letter</span>
+              <span class="agent-badge">AI agent</span>
+            </span>
+            <svg class="accordion-chevron" [class.accordion-chevron--open]="openAccordionIndex() === 2"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="accordion-panel" [class.accordion-panel--open]="openAccordionIndex() === 2"
+            id="acc-panel-2" role="region">
+            <div class="accordion-body">
+              <p class="tool-desc">
+                Paste a job description. Get a letter written in your actual voice —
+                your phrases, your tone, your style. Not a template.
+              </p>
+              <textarea
+                class="use-textarea"
+                placeholder="Paste the job description here…"
+                [value]="jobPostForLetter()"
+                (input)="jobPostForLetter.set($any($event.target).value)"
+                rows="5"
+                aria-label="Job description for cover letter">
+              </textarea>
+              <button
+                class="use-action-btn use-action-btn--primary"
+                type="button"
+                (click)="generateLetter()"
+                [disabled]="letterLoading() || !jobPostForLetter().trim()">
+                @if (letterLoading()) { Writing… } @else { Write cover letter }
+              </button>
+              @if (letterError()) {
+                <p class="use-error-text" role="alert">{{ letterError() }}</p>
+              }
+              @if (letterResult()) {
+                <div class="use-result-panel">
+                  <div class="use-result-header">
+                    <span>Cover letter</span>
+                    <button class="result-copy-btn" type="button" (click)="copyResult(letterResult(), letterCopied)">
+                      {{ letterCopied() ? '✓ Copied' : 'Copy' }}
+                    </button>
+                  </div>
+                  <pre class="use-result-pre">{{ letterResult() }}</pre>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
         <!-- 3 · Practice interviews -->
         <div class="accordion-item">
           <button
@@ -232,7 +214,6 @@
             [attr.aria-expanded]="openAccordionIndex() === 3"
             aria-controls="acc-panel-3"
             (click)="toggleAccordion(3)">
-
             <span class="accordion-trigger__text">
               <span class="accordion-trigger__title">Practice interviews</span>
             </span>
@@ -263,7 +244,6 @@
             [attr.aria-expanded]="openAccordionIndex() === 4"
             aria-controls="acc-panel-4"
             (click)="toggleAccordion(4)">
-
             <span class="accordion-trigger__text">
               <span class="accordion-trigger__title">Think with AI</span>
             </span>
@@ -312,7 +292,6 @@
             [attr.aria-expanded]="openAccordionIndex() === 5"
             aria-controls="acc-panel-5"
             (click)="toggleAccordion(5)">
-
             <span class="accordion-trigger__text">
               <span class="accordion-trigger__title">Use in your AI setup</span>
             </span>
@@ -343,6 +322,39 @@
 
       </div>
     </div>
+
+    <!-- Right: document -->
+    <div class="doc-col">
+      <div class="doc-header">
+        <p class="doc-label">Identity protocol</p>
+        <div class="doc-actions" role="toolbar" aria-label="Document actions">
+          @if (copyConfirmation()) {
+            <span class="bar-confirmation" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              {{ copyConfirmation() }}
+            </span>
+          }
+          <button class="bar-btn bar-btn--ghost" type="button" (click)="downloadDocumentClicked.emit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download
+          </button>
+          <button class="bar-btn bar-btn--primary" type="button" (click)="copyDocumentClicked.emit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <pre class="document-pre">{{ identityDoc()?.raw }}</pre>
+    </div>
+
   </main>
 
 </div>

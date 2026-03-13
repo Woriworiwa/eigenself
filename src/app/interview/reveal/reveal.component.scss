@@ -35,6 +35,60 @@
   background: var(--bg);
 }
 
+// ─── Hero (top of left column) ────────────────────────────────────────────────
+
+.reveal-hero {
+  flex-shrink: 0;
+  background: var(--bg);
+  padding: var(--sp-8) var(--sp-7) var(--sp-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  border-bottom: 1px solid var(--line-soft);
+  animation: fadeUp 0.4s ease both;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  align-self: flex-start;
+}
+
+.hero-badge__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  margin: 0;
+}
+
+.hero-body {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--ink-2);
+  border-left: 2px solid var(--bg-inset);
+  padding-left: var(--sp-5);
+  margin: 0;
+}
+
+
 // ─── Confirmation ─────────────────────────────────────────────────────────────
 
 .bar-confirmation {
@@ -96,7 +150,7 @@
 // ─── Left: document column ────────────────────────────────────────────────────
 
 .doc-col {
-  border-right: 1px solid var(--line-soft);
+  border-left: 1px solid var(--line-soft);
   padding: var(--sp-8) var(--sp-8);
   display: flex;
   flex-direction: column;
@@ -120,14 +174,14 @@
   flex-shrink: 0;
 }
 
-.doc-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+.doc-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-4);
   margin: 0;
+  align-self: center;
 }
 
 .document-pre {
@@ -526,8 +580,8 @@
   }
 
   .doc-col {
-    border-right: none;
-    border-bottom: 1px solid var(--line-soft);
+    border-left: none;
+    border-top: 1px solid var(--line-soft);
     max-height: 50vh;
   }
 }

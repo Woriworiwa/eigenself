@@ -51,6 +51,7 @@ export class InterviewStateComponent implements AfterViewChecked {
 
   splitSentences(text: string): string[] {
     return text
+      .replace(/\[?CONVERSATION_COMPLETE\]?/g, '')
       .split(/(?<=[.?!])\s+(?=[A-Z"'])/)
       .map(s => s.trim())
       .filter(s => s.length > 0);

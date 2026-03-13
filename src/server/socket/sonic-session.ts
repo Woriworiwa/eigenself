@@ -195,7 +195,7 @@ export async function createSonicSession(
           const raw = textOut.content;
 
           // Detect completion before stripping
-          if (!completeSent && raw.includes('[CONVERSATION_COMPLETE]')) {
+          if (!completeSent && raw.includes('CONVERSATION_COMPLETE')) {
             completeSent = true;
           }
 
@@ -210,7 +210,7 @@ export async function createSonicSession(
           // Strip control tokens and normalise newlines → space.
           // Do NOT trim: edge whitespace from \n→space conversion is the separator
           // between adjacent chunks, and trimming it causes "word1.Word2" run-ons.
-          const text = raw.replace(/\[CONVERSATION_COMPLETE\]/g, '').replace(/\n+/g, ' ');
+          const text = raw.replace(/\[?CONVERSATION_COMPLETE\]?/g, '').replace(/\n+/g, ' ');
           if (!text.trim()) continue;
 
           // Accumulate server-side for the fullTranscript (sent on complete)

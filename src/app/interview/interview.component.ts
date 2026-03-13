@@ -313,7 +313,7 @@ export class InterviewComponent implements OnDestroy {
       ...msgs,
       {
         role: 'agent',
-        text: opening.replace('[CONVERSATION_COMPLETE]', '').trim(),
+        text: opening.replace(/\[?CONVERSATION_COMPLETE\]?/g, '').trim(),
         timestamp: new Date(),
       },
     ]);
@@ -525,8 +525,8 @@ export class InterviewComponent implements OnDestroy {
 
     const agentResponse = await this.sendToAgent(text.trim());
 
-    const isComplete = agentResponse.includes('[CONVERSATION_COMPLETE]');
-    const cleanResponse = agentResponse.replace('[CONVERSATION_COMPLETE]', '').trim();
+    const isComplete = agentResponse.includes('CONVERSATION_COMPLETE');
+    const cleanResponse = agentResponse.replace(/\[?CONVERSATION_COMPLETE\]?/g, '').trim();
 
     this.messages.update((msgs) => [
       ...msgs,

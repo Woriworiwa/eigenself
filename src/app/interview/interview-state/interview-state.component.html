@@ -12,7 +12,9 @@
             <p class="iv-msg__sender">
               {{ interviewMode() === 'sonic' ? 'Nova 2 Sonic' : (useAgent() ? 'Bedrock Agent' : 'Nova 2 Lite') }}
             </p>
-            <p class="iv-msg__text--nova">{{ message.text }}</p>
+            @for (sentence of splitSentences(message.text); track $index) {
+              <p class="iv-msg__text--nova">{{ sentence }}</p>
+            }
           </div>
         }
 

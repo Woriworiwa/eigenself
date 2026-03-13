@@ -102,11 +102,13 @@ export class InterviewComponent implements OnDestroy {
     if (this.interviewMode() !== 'sonic') return;
     const transcript = this.sonicService.fullTranscript();
     this.messages.set(
-      transcript.map((t: SonicTranscriptEntry) => ({
-        role: t.role,
-        text: t.text,
-        timestamp: new Date(),
-      })),
+      transcript
+        .filter((t, i) => !(i === 0 && t.role === 'user' && t.text.trim().toLowerCase() === 'hi'))
+        .map((t: SonicTranscriptEntry) => ({
+          role: t.role,
+          text: t.text,
+          timestamp: new Date(),
+        })),
     );
   }, { allowSignalWrites: true });
 

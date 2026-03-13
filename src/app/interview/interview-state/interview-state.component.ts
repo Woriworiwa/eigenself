@@ -49,6 +49,13 @@ export class InterviewStateComponent implements AfterViewChecked {
     this.textChanged.emit((event.target as HTMLInputElement).value);
   }
 
+  splitSentences(text: string): string[] {
+    return text
+      .split(/(?<=[.?!])\s+(?=[A-Z"'])/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+  }
+
   private scrollToBottom(): void {
     try {
       const el = this.conversationBodyEl()?.nativeElement;
